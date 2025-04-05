@@ -15,8 +15,13 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
-let connectionState;
-let quotaEngine;
+interface ConnectionState {
+    azureConnected: boolean;
+    besuAvailable: boolean;
+}
+
+let connectionState: ConnectionState;
+let quotaEngine: QuotaEngine;
 
 // Express error handling middleware
 app.use((err, req, res, next) => {
