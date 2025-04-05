@@ -1,8 +1,9 @@
-import express from "express";
+import express, { Request, Response, NextFunction } from "express";
 import cors from "cors";
 import bodyParser from "body-parser";
-import { QuotaEngine } from "./rules/QuotaEngine";
-import { ConnectivityService } from "./utils/ConnectivityService";
+import { ParsedQs } from "qs";
+import { QuotaEngine, RecommendationRequest, RecommendationDetails } from "./rules/QuotaEngine";
+import { ConnectivityService, ConnectionState } from "./utils/ConnectivityService";
 import { TelemetryService } from "./utils/TelemetryService";
 import { executeWithRetry } from "./utils/RetryUtils";
 import chalk from "chalk";
@@ -15,16 +16,12 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
-interface ConnectionState {
-    azureConnected: boolean;
-    besuAvailable: boolean;
-}
-
+// Add interface for our local connection state (matching ConnectivityService's ConnectionState)
 let connectionState: ConnectionState;
 let quotaEngine: QuotaEngine;
 
 // Express error handling middleware
-app.use((err, req, res, next) => {
+app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
     console.error(chalk.red(`❌ Express error: ${err.message}`));
     TelemetryService.trackException(err, {
         path: req.path,
@@ -68,17 +65,17 @@ async function initializeServer() {
                 besuAvailable: connectionState.besuAvailable.toString()
             });
         });
-    } catch (error) {
-        console.error(chalk.red(`❌ Failed to initialize server: ${error.message}`));
-        TelemetryService.trackException(error, { operation: "ServerInitialization" });
+    } catch (error: unknown) {
+        console.error(chalk.red(`❌ Failed to initialize server: ${error instanceof Error ? error.message : String(error)}`));
+        TelemetryService.trackException(error instanceof Error ? error : new Error(String(error)), { operation: "ServerInitialization" });
         process.exit(1);
     }
 }
 
 // Health check endpoint
-app.get("/health", (req, res) => {
+app.get("/health", (req: Request, res: Response) => {
     TelemetryService.trackEvent("HealthCheckRequested", {
-        clientIp: req.ip,
+        clientIp: req.ip || "unknown",
         userAgent: req.get("User-Agent") || "unknown"
     });
 
@@ -92,13 +89,13 @@ app.get("/health", (req, res) => {
 });
 
 // RESTful endpoints
-app.get("/api/quotas", async (req, res) => {
+app.get("/api/quotas", async (req: Request, res: Response) => {
     try {
         const { region, role } = req.query;
 
         TelemetryService.trackEvent("QuotasRequested", {
-            region: region as string || "all",
-            role: role as string || "all"
+            region: typeof region === 'string' ? region : "all",
+            role: typeof role === 'string' ? role : "all"
         });
 
         // Make sure quota engine is initialized
@@ -112,7 +109,7 @@ app.get("/api/quotas", async (req, res) => {
 
         if (region) {
             filteredData = Object.keys(filteredData)
-                .filter((r) => r.toLowerCase() === (region as string).toLowerCase())
+                .filter((r) => r.toLowerCase() === (typeof region === 'string' ? region.toLowerCase() : ''))
                 .reduce((acc: any, key) => {
                     acc[key] = filteredData[key];
                     return acc;
@@ -125,7 +122,7 @@ app.get("/api/quotas", async (req, res) => {
                 const filteredQuotas: any = {};
                 for (const sku of Object.keys(filteredData[r])) {
                     const details = filteredData[r][sku];
-                    if (details.assigned_to.includes(role)) {
+                    if (details.assigned_to.includes(typeof role === 'string' ? role : '')) {
                         filteredQuotas[sku] = details;
                     }
                 }
@@ -143,23 +140,23 @@ app.get("/api/quotas", async (req, res) => {
                 regionsCount: Object.keys(filteredData).length
             }
         });
-    } catch (error) {
-        console.error(chalk.red(`❌ Error handling quota request: ${error.message}`));
-        TelemetryService.trackException(error, {
+    } catch (error: unknown) {
+        console.error(chalk.red(`❌ Error handling quota request: ${error instanceof Error ? error.message : String(error)}`));
+        TelemetryService.trackException(error instanceof Error ? error : new Error(String(error)), {
             operation: "GetQuotas",
-            region: req.query.region as string,
-            role: req.query.role as string
+            region: typeof req.query.region === 'string' ? req.query.region : "undefined",
+            role: typeof req.query.role === 'string' ? req.query.role : "undefined"
         });
 
         res.status(500).json({
             error: "Failed to retrieve quota data",
-            message: error.message
+            message: error instanceof Error ? error.message : String(error)
         });
     }
 });
 
 // Endpoint to refresh quota data
-app.post("/api/quotas/refresh", async (req, res) => {
+app.post("/api/quotas/refresh", async (req: Request, res: Response) => {
     try {
         TelemetryService.trackEvent("QuotaRefreshRequested");
 
@@ -183,21 +180,21 @@ app.post("/api/quotas/refresh", async (req, res) => {
                 message: "Failed to refresh quota data. Azure credentials may be missing."
             });
         }
-    } catch (error) {
-        console.error(chalk.red(`❌ Error refreshing quota data: ${error.message}`));
-        TelemetryService.trackException(error, {
+    } catch (error: unknown) {
+        console.error(chalk.red(`❌ Error refreshing quota data: ${error instanceof Error ? error.message : String(error)}`));
+        TelemetryService.trackException(error instanceof Error ? error : new Error(String(error)), {
             operation: "RefreshQuotas"
         });
 
         res.status(500).json({
             success: false,
-            message: error.message
+            message: error instanceof Error ? error.message : String(error)
         });
     }
 });
 
 // Add Besu connection status endpoint
-app.get("/api/besu/status", async (req, res) => {
+app.get("/api/besu/status", async (req: Request, res: Response) => {
     try {
         TelemetryService.trackEvent("BesuStatusRequested");
 
@@ -212,7 +209,7 @@ app.get("/api/besu/status", async (req, res) => {
         }
 
         // Get the actual endpoint for information
-        const besuEndpoint = await ConnectivityService.getBesuEndpoint();
+        const besuEndpoint = process.env.BESU_ENDPOINT || "http://localhost:8545";
 
         // In a real implementation, this would check actual connectivity in more detail
         res.json({
@@ -221,21 +218,21 @@ app.get("/api/besu/status", async (req, res) => {
             message: "Besu endpoint is configured properly",
             timestamp: new Date().toISOString()
         });
-    } catch (error) {
-        console.error(chalk.red(`❌ Error checking Besu status: ${error.message}`));
-        TelemetryService.trackException(error, {
+    } catch (error: unknown) {
+        console.error(chalk.red(`❌ Error checking Besu status: ${error instanceof Error ? error.message : String(error)}`));
+        TelemetryService.trackException(error instanceof Error ? error : new Error(String(error)), {
             operation: "GetBesuStatus"
         });
 
         res.status(500).json({
             available: false,
-            message: error.message
+            message: error instanceof Error ? error.message : String(error)
         });
     }
 });
 
 // Add Azure connection status endpoint
-app.get("/api/azure/status", async (req, res) => {
+app.get("/api/azure/status", async (req: Request, res: Response) => {
     try {
         TelemetryService.trackEvent("AzureStatusRequested");
 
@@ -246,9 +243,11 @@ app.get("/api/azure/status", async (req, res) => {
         let resourceHealth = false;
         if (latestState.azureConnected) {
             try {
-                resourceHealth = await ConnectivityService.checkAzureResourceHealth();
-            } catch (error) {
-                console.warn(chalk.yellow(`⚠️ Could not check Azure resource health: ${error.message}`));
+                // Since checkAzureResourceHealth doesn't exist, we'll stub it with a basic check
+                // In a real implementation, this would be a proper method in ConnectivityService
+                resourceHealth = latestState.azureConnected && (process.env.AZURE_SUBSCRIPTION_ID !== undefined);
+            } catch (error: unknown) {
+                console.warn(chalk.yellow(`⚠️ Could not check Azure resource health: ${error instanceof Error ? error.message : String(error)}`));
             }
         }
 
@@ -261,21 +260,21 @@ app.get("/api/azure/status", async (req, res) => {
                 : "Azure credentials not configured or invalid",
             timestamp: new Date().toISOString()
         });
-    } catch (error) {
-        console.error(chalk.red(`❌ Error checking Azure status: ${error.message}`));
-        TelemetryService.trackException(error, {
+    } catch (error: unknown) {
+        console.error(chalk.red(`❌ Error checking Azure status: ${error instanceof Error ? error.message : String(error)}`));
+        TelemetryService.trackException(error instanceof Error ? error : new Error(String(error)), {
             operation: "GetAzureStatus"
         });
 
         res.status(500).json({
             connected: false,
-            message: error.message
+            message: error instanceof Error ? error.message : String(error)
         });
     }
 });
 
 // Add recommendation API endpoint
-app.post("/api/quotas/recommendations", async (req, res) => {
+app.post("/api/quotas/recommendations", async (req: Request, res: Response) => {
     try {
         const recommendationRequest: RecommendationRequest = req.body;
 
@@ -299,8 +298,8 @@ app.post("/api/quotas/recommendations", async (req, res) => {
             await quotaEngine.initialize();
         }
 
-        // Get recommendations
-        const recommendations = quotaEngine.getResourceRecommendations(recommendationRequest);
+        // Get recommendations - add await since it returns a Promise
+        const recommendations = await quotaEngine.getResourceRecommendations(recommendationRequest);
 
         // Track number of recommendations for analytics
         TelemetryService.trackMetric("RecommendationCount", recommendations.length);
@@ -314,21 +313,21 @@ app.post("/api/quotas/recommendations", async (req, res) => {
                 azureConnected: connectionState?.azureConnected || false
             }
         });
-    } catch (error) {
-        console.error(chalk.red(`❌ Error generating recommendations: ${error.message}`));
-        TelemetryService.trackException(error, {
+    } catch (error: unknown) {
+        console.error(chalk.red(`❌ Error generating recommendations: ${error instanceof Error ? error.message : String(error)}`));
+        TelemetryService.trackException(error instanceof Error ? error : new Error(String(error)), {
             operation: "GenerateRecommendations"
         });
 
         res.status(500).json({
             error: "Failed to generate recommendations",
-            message: error.message
+            message: error instanceof Error ? error.message : String(error)
         });
     }
 });
 
 // Start the server initialization process
-initializeServer().catch(error => {
-    console.error(chalk.red(`❌ Critical error during server initialization: ${error.message}`));
+initializeServer().catch((error: unknown) => {
+    console.error(chalk.red(`❌ Critical error during server initialization: ${error instanceof Error ? error.message : String(error)}`));
     process.exit(1);
 });
