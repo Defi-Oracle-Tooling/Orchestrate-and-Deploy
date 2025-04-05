@@ -59,11 +59,14 @@ importers:
         specifier: ^2.8.17
         version: 2.8.17
       '@types/express':
-        specifier: ^4.17.14
+        specifier: ^4.17.21
         version: 4.17.21
       '@types/node':
         specifier: ^18.19.86
         version: 18.19.86
+      chalk:
+        specifier: ^4.1.2
+        version: 4.1.2
       react:
         specifier: ^18.2.0
         version: 18.3.1
@@ -192,6 +195,9 @@ importers:
       '@azure/monitor-opentelemetry':
         specifier: ^1.0.0
         version: 1.9.0
+      '@types/qs':
+        specifier: ^6.9.18
+        version: 6.9.18
       applicationinsights:
         specifier: ^2.5.1
         version: 2.9.6
@@ -207,6 +213,9 @@ importers:
       express:
         specifier: ^4.18.2
         version: 4.21.2
+      qs:
+        specifier: ^6.14.0
+        version: 6.14.0
       yaml:
         specifier: ^2.2.1
         version: 2.7.1
@@ -2658,6 +2667,10 @@ packages:
 
   qs@6.13.0:
     resolution: {integrity: sha512-+38qI9SOr8tfZ4QmJNplMUxqjbe7LKvvZgWdExBOmd+egZTtjLB67Gu0HRX3u/XOq7UU2Nx6nsjvS16Z9uwfpg==}
+    engines: {node: '>=0.6'}
+
+  qs@6.14.0:
+    resolution: {integrity: sha512-YWWTjgABSKcvs/nWBi9PycY/JiPJqOD4JA6o9Sej2AtvSGarXxKC3OQSk4pAarbdQlKAh5D4FCQkJNkW+GAn3w==}
     engines: {node: '>=0.6'}
 
   queue-microtask@1.2.3:
@@ -6066,6 +6079,10 @@ snapshots:
   punycode@2.3.1: {}
 
   qs@6.13.0:
+    dependencies:
+      side-channel: 1.1.0
+
+  qs@6.14.0:
     dependencies:
       side-channel: 1.1.0
 
