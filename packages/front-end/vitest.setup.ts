@@ -5,7 +5,6 @@ import matchers from "@testing-library/jest-dom/matchers";
 expect.extend(matchers);
 
 // Initialize jsdom globally
-import { JSDOM } from "jsdom";
 const dom = new JSDOM("<body></body>", { url: "http://localhost" });
 global.document = dom.window.document;
 global.window = dom.window;
