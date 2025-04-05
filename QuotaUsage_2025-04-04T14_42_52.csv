@@ -1,0 +1,205 @@
+Filter,Selected Values,,,
+Subscription Name,Pay-As-You-Go,,,
+Subscription ID,1bb1d10b-edf8-4d82-ade3-021a2b61f312,,,
+Providers ,Compute,,,
+Regions ,"Australia Central, Australia Central 2, Australia East, Australia Southeast, Brazil South, Brazil Southeast, Canada Central, Central India, East Asia, France Central, France South, Germany North, Germany West Central, Israel Central, Italy North, Japan East, Japan West, Jio India Central, Korea Central, Mexico Central, New Zealand North, North Europe, Norway East, Norway West, Poland Central, South Africa North, South Africa West, South India, Southeast Asia, Spain Central, Sweden Central, Switzerland North, Switzerland West, UAE Central, UAE North, UK South, UK West, West Europe",,,
+Show by usage,Show all,,,
+Search,Standard ,,,
+Report Generated Date and Time,4/4/25 14:42,,,
+,,,,
+Quota,Region,Usage,Current Limit,Usage%
+Standard NCadsH100v5 Family vCPUs,West Europe,0,1440,0%
+Standard DSv4 Family vCPUs,Australia Central,0,128,0%
+Standard DSv4 Family vCPUs,Australia East,0,128,0%
+Standard DSv4 Family vCPUs,Australia Southeast,0,128,0%
+Standard DSv4 Family vCPUs,Brazil South,0,128,0%
+Standard DSv4 Family vCPUs,Canada Central,0,128,0%
+Standard DSv4 Family vCPUs,Central India,0,128,0%
+Standard DSv4 Family vCPUs,East Asia,0,128,0%
+Standard DSv4 Family vCPUs,France Central,0,128,0%
+Standard DSv4 Family vCPUs,Germany West Central,0,128,0%
+Standard DSv4 Family vCPUs,Israel Central,0,128,0%
+Standard DSv4 Family vCPUs,Italy North,0,128,0%
+Standard DSv4 Family vCPUs,Japan East,0,128,0%
+Standard DSv4 Family vCPUs,Japan West,0,128,0%
+Standard DSv4 Family vCPUs,Korea Central,0,128,0%
+Standard DSv4 Family vCPUs,Mexico Central,0,128,0%
+Standard DSv4 Family vCPUs,New Zealand North,0,128,0%
+Standard DSv4 Family vCPUs,North Europe,0,128,0%
+Standard DSv4 Family vCPUs,Norway East,0,128,0%
+Standard Dv4 Family vCPUs,Poland Central,0,128,0%
+Standard DSv4 Family vCPUs,Poland Central,0,128,0%
+Standard DSv4 Family vCPUs,South Africa North,0,128,0%
+Standard DSv4 Family vCPUs,South India,0,128,0%
+Standard DSv4 Family vCPUs,Southeast Asia,0,128,0%
+Standard DSv4 Family vCPUs,Spain Central,0,128,0%
+Standard DSv4 Family vCPUs,Sweden Central,0,128,0%
+Standard DSv4 Family vCPUs,Switzerland North,0,128,0%
+Standard DSv4 Family vCPUs,UAE North,0,128,0%
+Standard DSv4 Family vCPUs,UK South,0,128,0%
+Standard DSv4 Family vCPUs,UK West,0,128,0%
+Standard DSv4 Family vCPUs,West Europe,0,128,0%
+Standard ESv4 Family vCPUs,Australia Central,0,24,0%
+Standard FSv2 Family vCPUs,Australia Central,0,24,0%
+Standard Ev5 Family vCPUs,Australia Central,0,24,0%
+Standard ESv5 Family vCPUs,Australia Central,0,24,0%
+Standard Bsv2 Family vCPUs,Australia Central,0,24,0%
+Standard Bsv2 Family vCPUs,Australia East,0,24,0%
+Standard ESv4 Family vCPUs,Australia East,0,24,0%
+Standard ESv5 Family vCPUs,Australia East,0,24,0%
+Standard Ev4 Family vCPUs,Australia East,0,24,0%
+Standard Ev5 Family vCPUs,Australia East,0,24,0%
+Standard FSv2 Family vCPUs,Australia East,0,24,0%
+Standard Ev4 Family vCPUs,Australia Southeast,0,24,0%
+Standard ESv4 Family vCPUs,Australia Southeast,0,24,0%
+Standard FSv2 Family vCPUs,Australia Southeast,0,24,0%
+Standard Ev5 Family vCPUs,Australia Southeast,0,24,0%
+Standard ESv5 Family vCPUs,Australia Southeast,0,24,0%
+Standard Bsv2 Family vCPUs,Australia Southeast,0,24,0%
+Standard Bsv2 Family vCPUs,Brazil South,0,24,0%
+Standard ESv4 Family vCPUs,Brazil South,0,24,0%
+Standard ESv5 Family vCPUs,Brazil South,0,24,0%
+Standard Ev4 Family vCPUs,Brazil South,0,24,0%
+Standard Ev5 Family vCPUs,Brazil South,0,24,0%
+Standard FSv2 Family vCPUs,Brazil South,0,24,0%
+Standard Bsv2 Family vCPUs,Canada Central,0,24,0%
+Standard ESv4 Family vCPUs,Canada Central,0,24,0%
+Standard ESv5 Family vCPUs,Canada Central,0,24,0%
+Standard Ev4 Family vCPUs,Canada Central,0,24,0%
+Standard Ev5 Family vCPUs,Canada Central,0,24,0%
+Standard FSv2 Family vCPUs,Canada Central,0,24,0%
+Standard Ev4 Family vCPUs,Central India,0,24,0%
+Standard ESv4 Family vCPUs,Central India,0,24,0%
+Standard FSv2 Family vCPUs,Central India,0,24,0%
+Standard Ev5 Family vCPUs,Central India,0,24,0%
+Standard ESv5 Family vCPUs,Central India,0,24,0%
+Standard Bsv2 Family vCPUs,Central India,0,24,0%
+Standard Bsv2 Family vCPUs,East Asia,0,24,0%
+Standard ESv4 Family vCPUs,East Asia,0,24,0%
+Standard ESv5 Family vCPUs,East Asia,0,24,0%
+Standard Ev4 Family vCPUs,East Asia,0,24,0%
+Standard Ev5 Family vCPUs,East Asia,0,24,0%
+Standard FSv2 Family vCPUs,East Asia,0,24,0%
+Standard Ev4 Family vCPUs,France Central,0,24,0%
+Standard ESv4 Family vCPUs,France Central,0,24,0%
+Standard FSv2 Family vCPUs,France Central,0,24,0%
+Standard Ev5 Family vCPUs,France Central,0,24,0%
+Standard ESv5 Family vCPUs,France Central,0,24,0%
+Standard Bsv2 Family vCPUs,France Central,0,24,0%
+Standard Bsv2 Family vCPUs,Germany West Central,0,24,0%
+Standard ESv4 Family vCPUs,Germany West Central,0,24,0%
+Standard ESv5 Family vCPUs,Germany West Central,0,24,0%
+Standard Ev4 Family vCPUs,Germany West Central,0,24,0%
+Standard Ev5 Family vCPUs,Germany West Central,0,24,0%
+Standard FSv2 Family vCPUs,Germany West Central,0,24,0%
+Standard Ev4 Family vCPUs,Israel Central,0,24,0%
+Standard ESv4 Family vCPUs,Israel Central,0,24,0%
+Standard FSv2 Family vCPUs,Israel Central,0,24,0%
+Standard Ev5 Family vCPUs,Israel Central,0,24,0%
+Standard ESv5 Family vCPUs,Israel Central,0,24,0%
+Standard Bsv2 Family vCPUs,Israel Central,0,24,0%
+Standard Ev4 Family vCPUs,Italy North,0,24,0%
+Standard ESv4 Family vCPUs,Italy North,0,24,0%
+Standard FSv2 Family vCPUs,Italy North,0,24,0%
+Standard Ev5 Family vCPUs,Italy North,0,24,0%
+Standard ESv5 Family vCPUs,Italy North,0,24,0%
+Standard Bsv2 Family vCPUs,Italy North,0,24,0%
+Standard ESv4 Family vCPUs,Japan East,0,24,0%
+Standard Ev4 Family vCPUs,Japan East,0,24,0%
+Standard FSv2 Family vCPUs,Japan East,0,24,0%
+Standard Ev4 Family vCPUs,Japan West,0,24,0%
+Standard ESv4 Family vCPUs,Japan West,0,24,0%
+Standard FSv2 Family vCPUs,Japan West,0,24,0%
+Standard Ev5 Family vCPUs,Japan West,0,24,0%
+Standard ESv5 Family vCPUs,Japan West,0,24,0%
+Standard Bsv2 Family vCPUs,Japan West,0,24,0%
+Standard Ev4 Family vCPUs,Korea Central,0,24,0%
+Standard ESv4 Family vCPUs,Korea Central,0,24,0%
+Standard FSv2 Family vCPUs,Korea Central,0,24,0%
+Standard Ev5 Family vCPUs,Korea Central,0,24,0%
+Standard ESv5 Family vCPUs,Korea Central,0,24,0%
+Standard Bsv2 Family vCPUs,Korea Central,0,24,0%
+Standard Ev4 Family vCPUs,Mexico Central,0,24,0%
+Standard ESv4 Family vCPUs,Mexico Central,0,24,0%
+Standard FSv2 Family vCPUs,Mexico Central,0,24,0%
+Standard Ev5 Family vCPUs,Mexico Central,0,24,0%
+Standard ESv5 Family vCPUs,Mexico Central,0,24,0%
+Standard Bsv2 Family vCPUs,Mexico Central,0,24,0%
+Standard Ev4 Family vCPUs,New Zealand North,0,24,0%
+Standard ESv4 Family vCPUs,New Zealand North,0,24,0%
+Standard FSv2 Family vCPUs,New Zealand North,0,24,0%
+Standard Ev5 Family vCPUs,New Zealand North,0,24,0%
+Standard ESv5 Family vCPUs,New Zealand North,0,24,0%
+Standard Bsv2 Family vCPUs,New Zealand North,0,24,0%
+Standard Bsv2 Family vCPUs,North Europe,0,24,0%
+Standard ESv4 Family vCPUs,North Europe,0,24,0%
+Standard ESv5 Family vCPUs,North Europe,0,24,0%
+Standard Ev4 Family vCPUs,North Europe,0,24,0%
+Standard Ev5 Family vCPUs,North Europe,0,24,0%
+Standard FSv2 Family vCPUs,North Europe,0,24,0%
+Standard Bsv2 Family vCPUs,Norway East,0,24,0%
+Standard ESv4 Family vCPUs,Norway East,0,24,0%
+Standard ESv5 Family vCPUs,Norway East,0,24,0%
+Standard Ev4 Family vCPUs,Norway East,0,24,0%
+Standard Ev5 Family vCPUs,Norway East,0,24,0%
+Standard FSv2 Family vCPUs,Norway East,0,24,0%
+Standard Ev4 Family vCPUs,Poland Central,0,24,0%
+Standard ESv4 Family vCPUs,Poland Central,0,24,0%
+Standard FSv2 Family vCPUs,Poland Central,0,24,0%
+Standard Ev5 Family vCPUs,Poland Central,0,24,0%
+Standard ESv5 Family vCPUs,Poland Central,0,24,0%
+Standard Bsv2 Family vCPUs,Poland Central,0,24,0%
+Standard Ev4 Family vCPUs,South Africa North,0,24,0%
+Standard ESv4 Family vCPUs,South Africa North,0,24,0%
+Standard FSv2 Family vCPUs,South Africa North,0,24,0%
+Standard Ev5 Family vCPUs,South Africa North,0,24,0%
+Standard ESv5 Family vCPUs,South Africa North,0,24,0%
+Standard Bsv2 Family vCPUs,South Africa North,0,24,0%
+Standard Ev4 Family vCPUs,South India,0,24,0%
+Standard ESv4 Family vCPUs,South India,0,24,0%
+Standard FSv2 Family vCPUs,South India,0,24,0%
+Standard Ev5 Family vCPUs,South India,0,24,0%
+Standard ESv5 Family vCPUs,South India,0,24,0%
+Standard Bsv2 Family vCPUs,South India,0,24,0%
+Standard Ev4 Family vCPUs,Southeast Asia,0,24,0%
+Standard ESv4 Family vCPUs,Southeast Asia,0,24,0%
+Standard FSv2 Family vCPUs,Southeast Asia,0,24,0%
+Standard Ev5 Family vCPUs,Southeast Asia,0,24,0%
+Standard ESv5 Family vCPUs,Southeast Asia,0,24,0%
+Standard Bsv2 Family vCPUs,Southeast Asia,0,24,0%
+Standard Ev4 Family vCPUs,Spain Central,0,24,0%
+Standard ESv4 Family vCPUs,Spain Central,0,24,0%
+Standard FSv2 Family vCPUs,Spain Central,0,24,0%
+Standard Ev5 Family vCPUs,Spain Central,0,24,0%
+Standard ESv5 Family vCPUs,Spain Central,0,24,0%
+Standard Bsv2 Family vCPUs,Spain Central,0,24,0%
+Standard Bsv2 Family vCPUs,Sweden Central,0,24,0%
+Standard ESv4 Family vCPUs,Sweden Central,0,24,0%
+Standard ESv5 Family vCPUs,Sweden Central,0,24,0%
+Standard Ev4 Family vCPUs,Sweden Central,0,24,0%
+Standard Ev5 Family vCPUs,Sweden Central,0,24,0%
+Standard FSv2 Family vCPUs,Sweden Central,0,24,0%
+Standard Ev4 Family vCPUs,Switzerland North,0,24,0%
+Standard ESv4 Family vCPUs,Switzerland North,0,24,0%
+Standard FSv2 Family vCPUs,Switzerland North,0,24,0%
+Standard Ev5 Family vCPUs,Switzerland North,0,24,0%
+Standard ESv5 Family vCPUs,Switzerland North,0,24,0%
+Standard Bsv2 Family vCPUs,Switzerland North,0,24,0%
+Standard Bsv2 Family vCPUs,UK South,0,24,0%
+Standard ESv4 Family vCPUs,UK South,0,24,0%
+Standard ESv5 Family vCPUs,UK South,0,24,0%
+Standard Ev4 Family vCPUs,UK South,0,24,0%
+Standard Ev5 Family vCPUs,UK South,0,24,0%
+Standard FSv2 Family vCPUs,UK South,0,24,0%
+Standard Bsv2 Family vCPUs,UK West,0,24,0%
+Standard ESv4 Family vCPUs,UK West,0,24,0%
+Standard ESv5 Family vCPUs,UK West,0,24,0%
+Standard Ev4 Family vCPUs,UK West,0,24,0%
+Standard Ev5 Family vCPUs,UK West,0,24,0%
+Standard FSv2 Family vCPUs,UK West,0,24,0%
+Standard Bsv2 Family vCPUs,West Europe,0,24,0%
+Standard ESv4 Family vCPUs,West Europe,0,24,0%
+Standard ESv5 Family vCPUs,West Europe,0,24,0%
+Standard Ev4 Family vCPUs,West Europe,0,24,0%
+Standard Ev5 Family vCPUs,West Europe,0,24,0%
+Standard FSv2 Family vCPUs,West Europe,0,24,0%
