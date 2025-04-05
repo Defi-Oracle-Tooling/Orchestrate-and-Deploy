@@ -1,3 +1,5 @@
+/* @vitest-environment jsdom */
+import "../../vitest.setup";
 import React from "react";
 import { render, screen } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
@@ -11,6 +13,7 @@ vi.mock("axios", () => ({
 describe("QuotaMatrix", () => {
     it("renders QuotaMatrix without crashing", () => {
         render(<QuotaMatrix />);
-        expect(screen.getByText(/Available Quota Matrix/i)).toBeInTheDocument();
+        const element = screen.getByText(/Available Quota Matrix/i);
+        expect(element).toBeTruthy();
     });
 });
