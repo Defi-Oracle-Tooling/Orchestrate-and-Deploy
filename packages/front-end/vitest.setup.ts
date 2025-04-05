@@ -1,5 +1,7 @@
-import { expect } from "vitest";
-import matchers from "@testing-library/jest-dom/matchers";
+import { expect, vi } from 'vitest';
+import '@testing-library/jest-dom';
+import * as matchers from '@testing-library/jest-dom/matchers';
+import { JSDOM } from "jsdom";
 
 // Extend Vitest's expect with Testing Library matchers
 expect.extend(matchers);
@@ -10,10 +12,5 @@ global.document = dom.window.document;
 global.window = dom.window;
 global.navigator = dom.window.navigator;
 
-globalThis.document = dom.window.document;
-globalThis.window = dom.window;
-globalThis.navigator = dom.window.navigator;
-
-console.log("Global document object:", global.document);
-
-console.log("jsdom environment initialized");
+// Mock fetch globally
+global.fetch = vi.fn();
