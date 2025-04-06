@@ -857,4 +857,51 @@ export class QuotaEngine {
             roles: assignedRoles.join(", ")
         });
     }
+
+    /**
+     * Summarizes quota availability for a specific role across all regions
+     * @param role Role to summarize quota for
+     * @returns Summary object with quota details for each applicable region
+     */
+    public summarizeQuotaAvailability(role: string): Record<string, { total: number; used: number; available: number; usage_percent: string }> {
+        TelemetryService.trackEvent('SummarizeQuotaAvailability', {
+            role
+        });
+
+        const summary: Record<string, { total: number; used: number; available: number; usage_percent: string }> = {};
+        const regions = this.getAvailableRegions();
+
+        // Check each region for the specified role
+        for (const region of regions) {
+            const regionData = this.getRegionData(region);
+
+            if (!regionData) continue;
+
+            // Find any SKU assigned to this role
+            for (const sku in regionData) {
+                const quotaDetails = regionData[sku];
+
+                if (quotaDetails.assigned_to.includes(role)) {
+                    const usagePercent = (quotaDetails.used / quotaDetails.total * 100).toFixed(2);
+
+                    summary[region] = {
+                        total: quotaDetails.total,
+                        used: quotaDetails.used,
+                        available: quotaDetails.available,
+                        usage_percent: usagePercent
+                    };
+
+                    // We've found a matching SKU for this region, move to the next region
+                    break;
+                }
+            }
+        }
+
+        TelemetryService.trackEvent('QuotaSummaryGenerated', {
+            role,
+            regionCount: Object.keys(summary).length.toString()
+        });
+
+        return summary;
+    }
 }
