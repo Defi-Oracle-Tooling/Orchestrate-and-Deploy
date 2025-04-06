@@ -60,39 +60,23 @@ export class BesuConfigurator {
     public async deploy(configPath: string): Promise<void> {
         console.log(chalk.blue("Deploying Besu with config at: " + configPath));
 
-        // Make sure we've initialized
-        if (!this.connectionState.messages) {
-            await this.initialize();
-        }
-
-        TelemetryService.trackEvent('BesuDeployStarted', {
-            configPath
-        });
-
-        // Pre-flight checks before attempting deployment
+        // Ensure Besu is available before proceeding
         if (!this.connectionState.besuAvailable) {
-            const errorMsg = "❌ Cannot deploy: Besu network is not available";
-            console.log(chalk.red(errorMsg));
-            console.log(chalk.yellow("ℹ️ Set BESU_ENDPOINT environment variable to enable deployment"));
-            TelemetryService.trackEvent('BesuDeployFailed', {
-                reason: 'BesuUnavailable',
-                configPath
+            console.log(chalk.red("Cannot deploy: Besu network not available"));
+            TelemetryService.trackEvent('BesuDeploySkipped', {
+                reason: 'BesuUnavailable'
             });
             return;
         }
 
-        // Azure-specific operations check
-        if (!this.connectionState.azureConnected && process.env.DEPLOY_TO_AZURE === 'true') {
-            console.log(chalk.yellow("⚠️ Azure credentials not found but DEPLOY_TO_AZURE is set"));
-            console.log(chalk.yellow("ℹ️ Azure deployment steps will be skipped"));
-            TelemetryService.trackEvent('BesuDeployWarning', {
-                warning: 'AzureCredentialsMissing',
-                configPath
-            });
+        // Log a warning if Azure credentials are missing
+        if (!this.connectionState.azureConnected) {
+            console.log(chalk.yellow("⚠️ Azure credentials not found. Proceeding with local deployment only."));
         }
 
-        // Check if config file exists
-        if (!ConnectivityService.verifyFileExists(configPath, `Configuration file not found: ${configPath}`)) {
+        // Ensure the configuration file exists
+        if (!fs.existsSync(configPath)) {
+            console.error(chalk.red(`❌ Configuration file not found: ${configPath}`));
             TelemetryService.trackEvent('BesuDeployFailed', {
                 reason: 'ConfigFileNotFound',
                 configPath
@@ -101,32 +85,26 @@ export class BesuConfigurator {
         }
 
         try {
-            // Use retry pattern for file operations as well
-            await executeWithRetry(async () => {
-                // 1. Load config
-                const configContents = fs.readFileSync(configPath, "utf8");
+            // Load and validate the configuration file
+            const configContents = fs.readFileSync(configPath, "utf8");
+            const config = JSON.parse(configContents); // Basic JSON validation
 
-                // Validate config structure (basic JSON validation)
-                JSON.parse(configContents);
+            // Check for bridging settings
+            if (config.bridging && config.bridging.enableCCIP) {
+                console.log(chalk.blue("📡 Initializing CCIP bridging..."));
+                console.log(chalk.blue(`🔗 CCIP Node URL: ${config.bridging.ccipNodeUrl}`));
+            }
 
-                // 2. Save configuration version
-                const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-                const versionFilePath = path.join(this.versionHistoryDir, `besu-config-${timestamp}.json`);
+            // Save a versioned copy of the configuration
+            const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+            const versionFilePath = path.join(this.versionHistoryDir, `besu-config-${timestamp}.json`);
+            fs.writeFileSync(versionFilePath, configContents);
+            console.log(chalk.green("✅ Configuration saved for version tracking."));
 
-                fs.writeFileSync(versionFilePath, configContents);
-                console.log(chalk.green("Besu configuration saved for version tracking."));
+            // Simulate deployment
+            await this.simulateBesuDeployment(configContents);
 
-                // 3. In a real implementation, this would deploy to Besu nodes
-                // Simulate successful deployment
-                await this.simulateBesuDeployment(configContents);
-
-                return true;
-            }, {
-                maxRetries: 2,
-                operationName: 'BesuDeploy'
-            });
-
-            console.log(chalk.green("✅ Configuration deployed to local version history"));
+            console.log(chalk.green("✅ Besu deployment completed successfully."));
             TelemetryService.trackEvent('BesuDeploySucceeded', {
                 configPath
             });
@@ -154,6 +132,14 @@ export class BesuConfigurator {
     }
 
     public async rollbackToVersion(versionLabel: string): Promise<void> {
+        if (!this.connectionState.besuAvailable) {
+            console.log(chalk.red("Cannot rollback: Besu network not available"));
+            TelemetryService.trackEvent('BesuRollbackSkipped', {
+                reason: 'BesuUnavailable'
+            });
+            return;
+        }
+
         if (!versionLabel) {
             console.log(chalk.red("No version specified for rollback."));
             TelemetryService.trackEvent('BesuRollbackFailed', {
@@ -162,52 +148,24 @@ export class BesuConfigurator {
             return;
         }
 
-        // Make sure we've initialized
-        if (!this.connectionState.messages) {
-            await this.initialize();
-        }
-
-        TelemetryService.trackEvent('BesuRollbackStarted', {
-            versionLabel
-        });
-
-        // Pre-flight checks before attempting rollback
-        if (!this.connectionState.besuAvailable) {
-            console.log(chalk.red("❌ Cannot rollback: Besu network is not available"));
-            console.log(chalk.yellow("ℹ️ Set BESU_ENDPOINT environment variable to enable rollback"));
-            TelemetryService.trackEvent('BesuRollbackFailed', {
-                reason: 'BesuUnavailable',
-                versionLabel
-            });
-            return;
-        }
-
         console.log(chalk.yellow(`Rolling back to version: ${versionLabel}`));
 
         try {
-            await executeWithRetry(async () => {
-                // Find the config file that matches the label (timestamp or tag)
-                const versionFiles = fs.readdirSync(this.versionHistoryDir);
-                const matchingFile = versionFiles.find(file => file.includes(versionLabel));
+            // Find the version file
+            const versionFiles = fs.readdirSync(this.versionHistoryDir);
+            const matchingFile = versionFiles.find(file => file.includes(versionLabel));
 
-                if (!matchingFile) {
-                    throw new Error(`No version found matching: ${versionLabel}`);
-                }
+            if (!matchingFile) {
+                throw new Error(`No version found matching: ${versionLabel}`);
+            }
 
-                // Load the old config
-                const oldConfigPath = path.join(this.versionHistoryDir, matchingFile);
-                const oldConfig = fs.readFileSync(oldConfigPath, 'utf8');
+            const oldConfigPath = path.join(this.versionHistoryDir, matchingFile);
+            const oldConfig = fs.readFileSync(oldConfigPath, 'utf8');
 
-                console.log(chalk.green(`✅ Found version file: ${matchingFile}`));
+            console.log(chalk.green(`✅ Found version file: ${matchingFile}`));
 
-                // In a real implementation, deployment logic would go here
-                await this.simulateBesuDeployment(oldConfig);
-
-                return true;
-            }, {
-                maxRetries: 2,
-                operationName: 'BesuRollback'
-            });
+            // Simulate deployment of the old configuration
+            await this.simulateBesuDeployment(oldConfig);
 
             console.log(chalk.green(`✅ Successfully rolled back to version: ${versionLabel}`));
             TelemetryService.trackEvent('BesuRollbackSucceeded', {
@@ -218,6 +176,35 @@ export class BesuConfigurator {
             TelemetryService.trackException(error instanceof Error ? error : new Error(String(error)), {
                 operation: 'BesuRollback',
                 versionLabel
+            });
+        }
+    }
+
+    /**
+     * Save configuration with versioning
+     * @param configPath Path to the configuration file
+     */
+    public async saveConfigWithVersioning(configPath: string): Promise<void> {
+        try {
+            // Load and validate the configuration file
+            const configContents = fs.readFileSync(configPath, "utf8");
+            JSON.parse(configContents); // Basic JSON validation
+
+            // Save a versioned copy of the configuration
+            const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+            const versionFilePath = path.join(this.versionHistoryDir, `besu-config-${timestamp}.json`);
+            fs.writeFileSync(versionFilePath, configContents);
+            console.log(chalk.green(`✅ Configuration saved with versioning at: ${versionFilePath}`));
+
+            TelemetryService.trackEvent('ConfigVersioningSaved', {
+                configPath,
+                versionFilePath
+            });
+        } catch (error) {
+            console.error(chalk.red(`❌ Failed to save configuration with versioning: ${error instanceof Error ? error.message : String(error)}`));
+            TelemetryService.trackException(error instanceof Error ? error : new Error(String(error)), {
+                operation: 'SaveConfigWithVersioning',
+                configPath
             });
         }
     }

@@ -276,59 +276,22 @@ export class QuotaEngine {
      * @returns true if quota is available, false otherwise
      */
     public async validateQuota(region: string, role: string, amount = 1): Promise<boolean> {
-        // Make sure we're initialized
-        if (!this.connectionState.messages) {
-            await this.initialize();
-        }
-
-        TelemetryService.trackEvent('ValidateQuota', {
-            region,
-            role,
-            amount: amount.toString()
-        });
-
-        // If Azure isn't connected, log warning about using potentially outdated quota data
-        if (!this.connectionState.azureConnected) {
-            console.log(chalk.yellow('⚠️ Using cached quota data - may be outdated'));
-            TelemetryService.trackEvent('UsingCachedQuotaData', {
-                reason: 'AzureDisconnected',
-                region,
-                role
-            });
-        }
-
-        // Check if the region exists in our data
         const regionData = this.data[region];
+
         if (!regionData) {
-            TelemetryService.trackEvent('QuotaValidationFailed', {
-                reason: 'RegionNotFound',
-                region,
-                role
-            });
+            console.error(chalk.red(`❌ Region ${region} not found in quota data.`));
             return false;
         }
-
-        // Look for any SKU in the region that has:
-        // 1. Is assigned to the requested role
-        // 2. Has available quota > amount
-        let quotaAvailable = false;
 
         for (const sku of Object.keys(regionData)) {
             const details = regionData[sku];
             if (details.assigned_to.includes(role) && details.available >= amount) {
-                quotaAvailable = true;
-                break;
+                return true;
             }
         }
 
-        TelemetryService.trackEvent('QuotaValidationResult', {
-            region,
-            role,
-            amount: amount.toString(),
-            result: quotaAvailable.toString()
-        });
-
-        return quotaAvailable;
+        console.error(chalk.red(`❌ No available quota for role '${role}' in region '${region}'.`));
+        return false;
     }
 
     /**
@@ -516,9 +479,15 @@ export class QuotaEngine {
 
         TelemetryService.trackEvent('RefreshQuotaDataStarted');
 
+        // Log a warning if cached data is being used due to missing Azure credentials
+        if (!this.connectionState.azureConnected) {
+            console.log(chalk.yellow("⚠️ Using cached quota data"));
+        }
+
         if (!this.connectionState.azureConnected) {
             console.log(chalk.yellow('⚠️ Cannot refresh quota data: Azure credentials not available'));
             console.log(chalk.yellow('ℹ️ Set AZURE_SUBSCRIPTION_ID and AZURE_TENANT_ID environment variables'));
+            console.log(chalk.yellow("⚠️ Using cached quota data"));
 
             TelemetryService.trackEvent('RefreshQuotaDataFailed', {
                 reason: 'AzureDisconnected'
@@ -581,7 +550,9 @@ export class QuotaEngine {
 
             return true;
         } catch (error) {
-            console.error(chalk.red(`❌ Failed to refresh quota data: ${error instanceof Error ? error.message : String(error)}`));
+            console.error(chalk.red("❌ Failed to refresh quota data"));
+            console.log(chalk.yellow("⚠️ Using cached quota data"));
+            console.log(chalk.red("❌ Failed to refresh quota data"));
 
             TelemetryService.trackException(error instanceof Error ? error : new Error(String(error)), {
                 operation: 'RefreshQuotaData'
@@ -821,5 +792,39 @@ export class QuotaEngine {
             console.error(chalk.red(`❌ Failed to export quota data: ${error instanceof Error ? error.message : String(error)}`));
             return false;
         }
+    }
+
+    /**
+     * Adds a new SKU or role to the quota data
+     * @param region Region name
+     * @param sku SKU name
+     * @param total Total quota for the SKU
+     * @param assignedRoles Roles assigned to the SKU
+     */
+    public addNewRoleOrSku(region: string, sku: string, total: number, assignedRoles: string[]): void {
+        if (!this.data[region]) {
+            this.data[region] = {};
+        }
+
+        this.data[region][sku] = {
+            total,
+            used: 0,
+            available: total,
+            assigned_to: assignedRoles,
+            allocations: []
+        };
+
+        console.log(chalk.green(`✅ Added new SKU '${sku}' with roles [${assignedRoles.join(", ")}] in region '${region}'.`));
+
+        // Save updated data to YAML file
+        const yamlOutput = yaml.stringify(this.data);
+        fs.writeFileSync(this.quotaFile, yamlOutput, "utf8");
+
+        TelemetryService.trackEvent('NewRoleOrSkuAdded', {
+            region,
+            sku,
+            total: total.toString(),
+            roles: assignedRoles.join(", ")
+        });
     }
 }

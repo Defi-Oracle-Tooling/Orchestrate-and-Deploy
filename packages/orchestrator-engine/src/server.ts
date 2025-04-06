@@ -93,63 +93,34 @@ app.get("/api/quotas", async (req: Request, res: Response) => {
     try {
         const { region, role } = req.query;
 
-        TelemetryService.trackEvent("QuotasRequested", {
-            region: typeof region === 'string' ? region : "all",
-            role: typeof role === 'string' ? role : "all"
-        });
+        if (!region || !role) {
+            return res.status(400).json({
+                error: "Invalid request",
+                message: "Both 'region' and 'role' query parameters are required."
+            });
+        }
 
-        // Make sure quota engine is initialized
+        // Ensure quota engine is initialized
         if (!quotaEngine) {
             quotaEngine = new QuotaEngine();
             await quotaEngine.initialize();
         }
 
-        // Filter regions if requested
-        let filteredData = { ...quotaEngine["data"] }; // direct access for demonstration
-
-        if (region) {
-            filteredData = Object.keys(filteredData)
-                .filter((r) => r.toLowerCase() === (typeof region === 'string' ? region.toLowerCase() : ''))
-                .reduce((acc: any, key) => {
-                    acc[key] = filteredData[key];
-                    return acc;
-                }, {});
-        }
-
-        // Filter roles if requested
-        if (role) {
-            for (const r of Object.keys(filteredData)) {
-                const filteredQuotas: any = {};
-                for (const sku of Object.keys(filteredData[r])) {
-                    const details = filteredData[r][sku];
-                    if (details.assigned_to.includes(typeof role === 'string' ? role : '')) {
-                        filteredQuotas[sku] = details;
-                    }
-                }
-                filteredData[r] = filteredQuotas;
-            }
-        }
+        const isEligible = await quotaEngine.validateQuota(region as string, role as string);
 
         res.json({
-            data: filteredData,
-            meta: {
-                timestamp: new Date().toISOString(),
-                usingCachedData: !connectionState?.azureConnected,
-                azureConnected: connectionState?.azureConnected,
-                besuAvailable: connectionState?.besuAvailable,
-                regionsCount: Object.keys(filteredData).length
-            }
+            region,
+            role,
+            eligible: isEligible
         });
-    } catch (error: unknown) {
-        console.error(chalk.red(`❌ Error handling quota request: ${error instanceof Error ? error.message : String(error)}`));
+    } catch (error) {
+        console.error(chalk.red(`❌ Error validating deployment eligibility: ${error instanceof Error ? error.message : String(error)}`));
         TelemetryService.trackException(error instanceof Error ? error : new Error(String(error)), {
-            operation: "GetQuotas",
-            region: typeof req.query.region === 'string' ? req.query.region : "undefined",
-            role: typeof req.query.role === 'string' ? req.query.role : "undefined"
+            operation: "ValidateDeploymentEligibility"
         });
 
         res.status(500).json({
-            error: "Failed to retrieve quota data",
+            error: "Internal server error",
             message: error instanceof Error ? error.message : String(error)
         });
     }
@@ -321,6 +292,80 @@ app.post("/api/quotas/recommendations", async (req: Request, res: Response) => {
 
         res.status(500).json({
             error: "Failed to generate recommendations",
+            message: error instanceof Error ? error.message : String(error)
+        });
+    }
+});
+
+// Add endpoint to suggest a region for deployment
+app.get("/api/quotas/suggestions/:role", async (req: Request, res: Response) => {
+    try {
+        const { role } = req.params;
+
+        if (!role) {
+            return res.status(400).json({
+                error: "Invalid request",
+                message: "'role' parameter is required."
+            });
+        }
+
+        // Ensure quota engine is initialized
+        if (!quotaEngine) {
+            quotaEngine = new QuotaEngine();
+            await quotaEngine.initialize();
+        }
+
+        const suggestion = await ConnectivityService.recommendBestRegion(role, 1); // Assuming 1 unit needed
+
+        res.json({
+            role,
+            suggestion
+        });
+    } catch (error) {
+        console.error(chalk.red(`❌ Error suggesting region: ${error instanceof Error ? error.message : String(error)}`));
+        TelemetryService.trackException(error instanceof Error ? error : new Error(String(error)), {
+            operation: "SuggestRegion"
+        });
+
+        res.status(500).json({
+            error: "Internal server error",
+            message: error instanceof Error ? error.message : String(error)
+        });
+    }
+});
+
+// Add endpoint to summarize quota availability for a role
+app.get("/api/quotas/summary/:role", async (req: Request, res: Response) => {
+    try {
+        const { role } = req.params;
+
+        if (!role) {
+            return res.status(400).json({
+                error: "Invalid request",
+                message: "'role' parameter is required."
+            });
+        }
+
+        // Ensure quota engine is initialized
+        if (!quotaEngine) {
+            quotaEngine = new QuotaEngine();
+            await quotaEngine.initialize();
+        }
+
+        const summary = quotaEngine.summarizeQuotaAvailability(role);
+
+        res.json({
+            role,
+            summary
+        });
+    } catch (error) {
+        console.error(chalk.red(`❌ Error summarizing quota availability: ${error instanceof Error ? error.message : String(error)}`));
+        TelemetryService.trackException(error instanceof Error ? error : new Error(String(error)), {
+            operation: "SummarizeQuotaAvailability"
+        });
+
+        res.status(500).json({
+            error: "Internal server error",
             message: error instanceof Error ? error.message : String(error)
         });
     }

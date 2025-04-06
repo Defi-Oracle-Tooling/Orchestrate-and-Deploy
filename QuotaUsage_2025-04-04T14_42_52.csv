@@ -203,3 +203,13 @@ Standard ESv5 Family vCPUs,West Europe,0,24,0%
 Standard Ev4 Family vCPUs,West Europe,0,24,0%
 Standard Ev5 Family vCPUs,West Europe,0,24,0%
 Standard FSv2 Family vCPUs,West Europe,0,24,0%
+
+# Extracting unique regions from the CSV file
+unique_regions = set()
+with open("QuotaUsage_2025-04-04T14_42_52.csv", "r") as file:
+    for line in file:
+        if "Region" in line:
+            unique_regions.add(line.split(",")[1].strip())
+
+# Print the unique regions
+print("Unique Regions:", unique_regions)

@@ -1,16 +1,12 @@
-import { expect, vi } from 'vitest';
 import '@testing-library/jest-dom';
-import * as matchers from '@testing-library/jest-dom/matchers';
-import { JSDOM } from "jsdom";
+import { vi } from 'vitest';
 
-// Extend Vitest's expect with Testing Library matchers
-expect.extend(matchers);
-
-// Initialize jsdom globally
-const dom = new JSDOM("<body></body>", { url: "http://localhost" });
-global.document = dom.window.document;
-global.window = dom.window;
-global.navigator = dom.window.navigator;
-
-// Mock fetch globally
+// Global mocks
 global.fetch = vi.fn();
+
+// Mock for ResizeObserver which isn't available in jsdom
+global.ResizeObserver = vi.fn().mockImplementation(() => ({
+    observe: vi.fn(),
+    unobserve: vi.fn(),
+    disconnect: vi.fn(),
+}));
