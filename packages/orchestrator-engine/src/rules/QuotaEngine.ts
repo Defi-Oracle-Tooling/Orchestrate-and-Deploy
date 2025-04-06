@@ -269,28 +269,58 @@ export class QuotaEngine {
     }
 
     /**
-     * Validates if a region has enough quota for a specific role
-     * @param region Azure region to check
-     * @param role Role or workload type to validate
-     * @param amount Amount of quota needed (default: 1)
-     * @returns true if quota is available, false otherwise
+     * Validates if a region has enough quota for a specific role.
+     * Enhances error handling by providing detailed error messages and telemetry tracking.
+     * @param region Azure region to check.
+     * @param role Role or workload type to validate.
+     * @param amount Amount of quota needed (default: 1).
+     * @returns true if quota is available, false otherwise.
      */
     public async validateQuota(region: string, role: string, amount = 1): Promise<boolean> {
+        if (!region || !role) {
+            const errorMessage = `Invalid parameters: region='${region}', role='${role}'`;
+            console.error(chalk.red(`❌ ${errorMessage}`));
+            TelemetryService.trackException(new Error(errorMessage), {
+                operation: 'ValidateQuota',
+                region,
+                role
+            });
+            return false;
+        }
+
         const regionData = this.data[region];
 
         if (!regionData) {
-            console.error(chalk.red(`❌ Region ${region} not found in quota data.`));
+            const errorMessage = `Region '${region}' not found in quota data.`;
+            console.error(chalk.red(`❌ ${errorMessage}`));
+            TelemetryService.trackException(new Error(errorMessage), {
+                operation: 'ValidateQuota',
+                region
+            });
             return false;
         }
 
         for (const sku of Object.keys(regionData)) {
             const details = regionData[sku];
             if (details.assigned_to.includes(role) && details.available >= amount) {
+                TelemetryService.trackEvent('QuotaValidationSucceeded', {
+                    region,
+                    role,
+                    sku,
+                    available: details.available.toString(),
+                    required: amount.toString()
+                });
                 return true;
             }
         }
 
-        console.error(chalk.red(`❌ No available quota for role '${role}' in region '${region}'.`));
+        const errorMessage = `No available quota for role '${role}' in region '${region}'.`;
+        console.error(chalk.red(`❌ ${errorMessage}`));
+        TelemetryService.trackException(new Error(errorMessage), {
+            operation: 'ValidateQuota',
+            region,
+            role
+        });
         return false;
     }
 

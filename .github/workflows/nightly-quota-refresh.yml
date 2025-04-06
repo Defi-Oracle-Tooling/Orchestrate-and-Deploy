@@ -30,3 +30,15 @@ jobs:
           git add packages/orchestrator-engine/data/quotas/live-quotas.yaml
           git commit -m "Nightly quota refresh: Update live-quotas.yaml" || echo "No changes to commit"
           git push
+
+      - name: Notify on failure
+        if: failure()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.example.com
+          server_port: 587
+          username: ${{ secrets.SMTP_USERNAME }}
+          password: ${{ secrets.SMTP_PASSWORD }}
+          subject: "Nightly Quota Refresh Failed"
+          to: "maintainers@example.com"
+          body: "The nightly quota refresh workflow has failed. Please check the logs for details."

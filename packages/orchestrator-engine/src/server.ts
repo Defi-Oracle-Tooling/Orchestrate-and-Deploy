@@ -371,6 +371,64 @@ app.get("/api/quotas/summary/:role", async (req: Request, res: Response) => {
     }
 });
 
+/**
+ * CLI command to suggest a region for deployment based on available quota.
+ * Usage: node server.js suggest-region <role>
+ */
+if (process.argv[2] === "suggest-region") {
+    const role = process.argv[3];
+
+    if (!role) {
+        console.error("❌ Role parameter is required.");
+        process.exit(1);
+    }
+
+    (async () => {
+        try {
+            if (!quotaEngine) {
+                quotaEngine = new QuotaEngine();
+                await quotaEngine.initialize();
+            }
+
+            const suggestion = await ConnectivityService.recommendBestRegion(role, 1); // Assuming 1 unit needed
+
+            console.log(`✅ Suggested region for role '${role}':`, suggestion);
+        } catch (error) {
+            console.error(`❌ Error suggesting region: ${error instanceof Error ? error.message : String(error)}`);
+            process.exit(1);
+        }
+    })();
+}
+
+/**
+ * CLI command to summarize quota availability for a role.
+ * Usage: node server.js summarize-availability <role>
+ */
+if (process.argv[2] === "summarize-availability") {
+    const role = process.argv[3];
+
+    if (!role) {
+        console.error("❌ Role parameter is required.");
+        process.exit(1);
+    }
+
+    (async () => {
+        try {
+            if (!quotaEngine) {
+                quotaEngine = new QuotaEngine();
+                await quotaEngine.initialize();
+            }
+
+            const summary = quotaEngine.summarizeQuotaAvailability(role);
+
+            console.log(`✅ Quota summary for role '${role}':`, summary);
+        } catch (error) {
+            console.error(`❌ Error summarizing quota availability: ${error instanceof Error ? error.message : String(error)}`);
+            process.exit(1);
+        }
+    })();
+}
+
 // Start the server initialization process
 initializeServer().catch((error: unknown) => {
     console.error(chalk.red(`❌ Critical error during server initialization: ${error instanceof Error ? error.message : String(error)}`));
