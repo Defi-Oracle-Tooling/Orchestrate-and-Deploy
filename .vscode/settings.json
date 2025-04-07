@@ -1,0 +1,9 @@
+{
+    "azureFunctions.deploySubpath": "packages/absolute-realms-submodule/functions",
+    "azureFunctions.postDeployTask": "npm install (functions)",
+    "azureFunctions.projectLanguage": "TypeScript",
+    "azureFunctions.projectRuntime": "~4",
+    "debug.internalConsoleOptions": "neverOpen",
+    "azureFunctions.projectSubpath": "packages/absolute-realms-submodule/functions",
+    "azureFunctions.preDeployTask": "npm prune (functions)"
+}
