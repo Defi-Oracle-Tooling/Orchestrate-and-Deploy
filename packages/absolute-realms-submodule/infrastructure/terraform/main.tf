@@ -50,6 +50,12 @@ variable "tags" {
   default     = {}
 }
 
+variable "authorized_ip_ranges" {
+  type        = list(string)
+  description = "List of authorized IP ranges in CIDR format that can access the storage account"
+  default     = []
+}
+
 # Local variables
 locals {
   base_name             = "absoluterealms"
@@ -114,15 +120,108 @@ resource "azurerm_key_vault_access_policy" "managed_identity" {
 
 # Storage Account
 resource "azurerm_storage_account" "main" {
-  name                     = local.storage_account_name
-  resource_group_name      = data.azurerm_resource_group.main.name
-  location                 = var.location
-  account_tier             = "Standard"
-  account_replication_type = "LRS"
-  min_tls_version          = "TLS1_2"
-  allow_blob_public_access = false
+  name                            = local.storage_account_name
+  resource_group_name             = data.azurerm_resource_group.main.name
+  location                        = var.location
+  account_tier                    = "Standard"
+  account_replication_type        = "LRS"
+  min_tls_version                 = "TLS1_2"
+  allow_nested_items_to_be_public = false
+  #  https_only_enabled              = true
+  infrastructure_encryption_enabled = true
+  shared_access_key_enabled       = false
+  
+  # Network rules for restricting access
+  network_rules {
+    default_action = "Deny"
+    bypass         = ["AzureServices"]
+    ip_rules       = var.authorized_ip_ranges
+    virtual_network_subnet_ids = []
+  }
+  
+  # Blob soft delete and versioning policies
+  blob_properties {
+    versioning_enabled       = true
+    change_feed_enabled      = true
+    last_access_time_enabled = true
+    
+    # Soft delete for blobs
+    delete_retention_policy {
+      days = 7 # Retain deleted blobs for 7 days
+    }
+    
+    # Soft delete for containers
+    container_delete_retention_policy {
+      days = 7 # Retain deleted containers for 7 days
+    }
+    
+    # CORS configuration
+    cors_rule {
+      allowed_headers    = ["*"]
+      allowed_methods    = ["GET", "HEAD"]
+      allowed_origins    = ["https://${local.static_site_name}.azurestaticapps.net"]
+      exposed_headers    = ["*"]
+      max_age_in_seconds = 3600
+    }
+    
+    # Prevent abuse by ensuring uploads use SAS tokens
+    default_service_version = "2020-06-12"
+  }
+  
+  # Identity for accessing other Azure resources
+  identity {
+    type = "SystemAssigned, UserAssigned"
+    identity_ids = [azurerm_user_assigned_identity.main.id]
+  }
   
   tags = local.common_tags
+}
+
+# Storage Account Lifecycle Management Policy
+resource "azurerm_storage_management_policy" "lifecycle" {
+  storage_account_id = azurerm_storage_account.main.id
+
+  rule {
+    name    = "archiveOldLogs"
+    enabled = true
+    filters {
+      prefix_match = ["logs/"]
+      blob_types   = ["blockBlob"]
+    }
+    actions {
+      base_blob {
+        tier_to_cool_after_days_since_modification_greater_than    = 30
+        tier_to_archive_after_days_since_modification_greater_than = 90
+        delete_after_days_since_modification_greater_than          = 365
+      }
+      snapshot {
+        delete_after_days_since_creation_greater_than = 30
+      }
+      version {
+        delete_after_days_since_creation = 90
+      }
+    }
+  }
+  
+  rule {
+    name    = "cleanupTempData"
+    enabled = true
+    filters {
+      prefix_match = ["temp/"]
+      blob_types   = ["blockBlob"]
+    }
+    actions {
+      base_blob {
+        delete_after_days_since_modification_greater_than = 7
+      }
+    }
+  }
+}
+
+# Storage Account Advanced Threat Protection
+resource "azurerm_advanced_threat_protection" "storage" {
+  target_resource_id = azurerm_storage_account.main.id
+  enabled            = true
 }
 
 # Application Insights
