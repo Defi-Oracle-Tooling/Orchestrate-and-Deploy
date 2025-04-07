@@ -1,16 +1,4 @@
-terraform {
-  required_providers {
-    azurerm = {
-      source  = "hashicorp/azurerm"
-      version = "~> 3.0"
-    }
-    azuread = {
-      source  = "hashicorp/azuread"
-      version = "~> 2.0"
-    }
-  }
-  backend "azurerm" {}
-}
+# terraform block with required_providers moved to versions.tf
 
 provider "azurerm" {
   features {
@@ -22,40 +10,6 @@ provider "azurerm" {
 
 provider "azuread" {}
 
-# Variables
-variable "resource_group_name" {
-  type        = string
-  description = "The name of the resource group"
-}
-
-variable "location" {
-  type        = string
-  description = "The Azure region where resources will be created"
-  default     = "eastus"
-}
-
-variable "environment" {
-  type        = string
-  description = "Deployment environment"
-  default     = "development"
-  validation {
-    condition     = contains(["development", "testing", "staging", "production"], var.environment)
-    error_message = "Environment must be one of: development, testing, staging, production."
-  }
-}
-
-variable "tags" {
-  type        = map(string)
-  description = "Tags to apply to all resources"
-  default     = {}
-}
-
-variable "authorized_ip_ranges" {
-  type        = list(string)
-  description = "List of authorized IP ranges in CIDR format that can access the storage account"
-  default     = []
-}
-
 # Local variables
 locals {
   base_name             = "absoluterealms"
@@ -66,7 +20,7 @@ locals {
   app_insights_name     = "${local.base_name}-ai-${var.environment}-${substr(md5(var.resource_group_name), 0, 8)}"
   app_service_plan_name = "${local.base_name}-asp-${var.environment}-${substr(md5(var.resource_group_name), 0, 8)}"
   user_identity_name    = "${local.base_name}-id-${var.environment}-${substr(md5(var.resource_group_name), 0, 8)}"
-  
+
   common_tags = merge({
     Environment = var.environment
     Project     = "Absolute Realms"
@@ -96,12 +50,12 @@ resource "azurerm_key_vault" "main" {
   soft_delete_retention_days = 90
   purge_protection_enabled   = true
   sku_name                   = "standard"
-  
+
   network_acls {
     default_action = "Allow"
     bypass         = "AzureServices"
   }
-  
+
   tags = local.common_tags
 }
 
@@ -110,7 +64,7 @@ resource "azurerm_key_vault_access_policy" "managed_identity" {
   key_vault_id = azurerm_key_vault.main.id
   tenant_id    = data.azurerm_client_config.current.tenant_id
   object_id    = azurerm_user_assigned_identity.main.principal_id
-  
+
   secret_permissions = [
     "Get",
     "List",
@@ -129,32 +83,32 @@ resource "azurerm_storage_account" "main" {
   allow_nested_items_to_be_public = false
   #  https_only_enabled              = true
   infrastructure_encryption_enabled = true
-  shared_access_key_enabled       = false
-  
+  shared_access_key_enabled         = false
+
   # Network rules for restricting access
   network_rules {
-    default_action = "Deny"
-    bypass         = ["AzureServices"]
-    ip_rules       = var.authorized_ip_ranges
+    default_action             = "Deny"
+    bypass                     = ["AzureServices"]
+    ip_rules                   = var.authorized_ip_ranges
     virtual_network_subnet_ids = []
   }
-  
+
   # Blob soft delete and versioning policies
   blob_properties {
     versioning_enabled       = true
     change_feed_enabled      = true
     last_access_time_enabled = true
-    
+
     # Soft delete for blobs
     delete_retention_policy {
       days = 7 # Retain deleted blobs for 7 days
     }
-    
+
     # Soft delete for containers
     container_delete_retention_policy {
       days = 7 # Retain deleted containers for 7 days
     }
-    
+
     # CORS configuration
     cors_rule {
       allowed_headers    = ["*"]
@@ -163,17 +117,17 @@ resource "azurerm_storage_account" "main" {
       exposed_headers    = ["*"]
       max_age_in_seconds = 3600
     }
-    
+
     # Prevent abuse by ensuring uploads use SAS tokens
     default_service_version = "2020-06-12"
   }
-  
+
   # Identity for accessing other Azure resources
   identity {
-    type = "SystemAssigned, UserAssigned"
+    type         = "SystemAssigned, UserAssigned"
     identity_ids = [azurerm_user_assigned_identity.main.id]
   }
-  
+
   tags = local.common_tags
 }
 
@@ -202,7 +156,7 @@ resource "azurerm_storage_management_policy" "lifecycle" {
       }
     }
   }
-  
+
   rule {
     name    = "cleanupTempData"
     enabled = true
@@ -230,7 +184,7 @@ resource "azurerm_application_insights" "main" {
   resource_group_name = data.azurerm_resource_group.main.name
   location            = var.location
   application_type    = "web"
-  
+
   tags = local.common_tags
 }
 
@@ -241,12 +195,12 @@ resource "azurerm_app_service_plan" "main" {
   location            = var.location
   kind                = "Linux"
   reserved            = true
-  
+
   sku {
     tier = "Dynamic"
     size = "Y1"
   }
-  
+
   tags = local.common_tags
 }
 
@@ -261,12 +215,12 @@ resource "azurerm_function_app" "main" {
   os_type                    = "linux"
   version                    = "~4"
   https_only                 = true
-  
+
   identity {
     type         = "UserAssigned"
     identity_ids = [azurerm_user_assigned_identity.main.id]
   }
-  
+
   app_settings = {
     FUNCTIONS_WORKER_RUNTIME       = "node"
     WEBSITE_NODE_DEFAULT_VERSION   = "~16"
@@ -275,7 +229,7 @@ resource "azurerm_function_app" "main" {
     WEBSITE_RUN_FROM_PACKAGE       = "1"
     AZURE_CLIENT_ID                = azurerm_user_assigned_identity.main.client_id
   }
-  
+
   site_config {
     linux_fx_version = "NODE|16"
     min_tls_version  = "1.2"
@@ -284,7 +238,7 @@ resource "azurerm_function_app" "main" {
       allowed_origins = ["https://${local.static_site_name}.azurestaticapps.net"]
     }
   }
-  
+
   tags = local.common_tags
 }
 
@@ -295,22 +249,9 @@ resource "azurerm_static_site" "main" {
   location            = var.location
   sku_tier            = "Standard"
   sku_size            = "Standard"
-  
+
   tags = local.common_tags
 }
 
 # Current Terraform execution context
 data "azurerm_client_config" "current" {}
-
-# Outputs
-output "function_app_url" {
-  value = "https://${azurerm_function_app.main.default_hostname}"
-}
-
-output "static_web_app_url" {
-  value = azurerm_static_site.main.default_host_name
-}
-
-output "key_vault_url" {
-  value = azurerm_key_vault.main.vault_uri
-}

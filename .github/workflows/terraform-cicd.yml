@@ -1,0 +1,146 @@
+name: "Terraform CI/CD Pipeline"
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'packages/absolute-realms-submodule/infrastructure/terraform/**'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'packages/absolute-realms-submodule/infrastructure/terraform/**'
+  workflow_dispatch:
+
+env:
+  TF_LOG: INFO
+  ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+  ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+  ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+  ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+
+jobs:
+  terraform-validate:
+    name: "Terraform Validation"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./packages/absolute-realms-submodule/infrastructure/terraform
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.7
+
+      - name: Terraform Format Check
+        id: fmt
+        run: terraform fmt -check -recursive
+      
+      - name: Terraform Init
+        id: init
+        run: terraform init -backend=false
+      
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate
+
+      - name: Checkov Security Scan
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: ./packages/absolute-realms-submodule/infrastructure/terraform
+          quiet: true
+          soft_fail: false
+          framework: terraform
+          output_format: sarif
+          output_file: checkov-results.sarif
+
+      - name: Upload SARIF file
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: checkov-results.sarif
+          category: checkov
+
+  terraform-plan:
+    name: "Terraform Plan"
+    needs: terraform-validate
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    
+    defaults:
+      run:
+        working-directory: ./packages/absolute-realms-submodule/infrastructure/terraform/environments/dev
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.7
+      
+      - name: Terraform Init
+        id: init
+        run: terraform init -backend-config="key=absolute-realms.dev.tfstate"
+      
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan -no-color -input=false
+        continue-on-error: true
+      
+      - name: Update PR with Plan
+        uses: actions/github-script@v6
+        if: github.event_name == 'pull_request'
+        env:
+          PLAN: "${{ steps.plan.outputs.stdout }}"
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const output = `#### Terraform Plan 📝\`${{ steps.plan.outcome }}\`
+            
+            <details><summary>Show Plan</summary>
+            
+            \`\`\`terraform
+            ${process.env.PLAN}
+            \`\`\`
+            
+            </details>
+            
+            *Pushed by: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
+              
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
+
+  terraform-apply:
+    name: "Terraform Apply"
+    needs: terraform-plan
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment: dev
+    
+    defaults:
+      run:
+        working-directory: ./packages/absolute-realms-submodule/infrastructure/terraform/environments/dev
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.7
+      
+      - name: Terraform Init
+        id: init
+        run: terraform init -backend-config="key=absolute-realms.dev.tfstate"
+      
+      - name: Terraform Apply
+        run: terraform apply -auto-approve -input=false
