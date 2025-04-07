@@ -169,4 +169,69 @@ describe("BesuConfigurator", () => {
         expect(fs.readdirSync).not.toHaveBeenCalled();
         expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining("Cannot rollback"));
     });
+
+    it("should save configuration with versioning for JSON files", async () => {
+        const configurator = new BesuConfigurator();
+        const testConfigPath = "test/besu-config.json";
+
+        // Mock file system operations
+        vi.mocked(fs.existsSync).mockReturnValue(true);
+        vi.mocked(fs.readFileSync).mockReturnValue("{ \"network\": \"test-network\" }");
+
+        await configurator.saveConfigWithVersioning(testConfigPath);
+
+        // Verify writeFileSync was called with the correct arguments
+        expect(fs.writeFileSync).toHaveBeenCalledWith(
+            expect.stringContaining("besu-config-"),
+            "{ \"network\": \"test-network\" }"
+        );
+    });
+
+    it("should save configuration with versioning for XML files", async () => {
+        const configurator = new BesuConfigurator();
+        const testConfigPath = "test/besu-config.xml";
+
+        // Mock file system operations
+        vi.mocked(fs.existsSync).mockReturnValue(true);
+        vi.mocked(fs.readFileSync).mockReturnValue("<network>test-network</network>");
+        vi.mocked(path.extname).mockReturnValue(".xml");
+
+        await configurator.saveConfigWithVersioning(testConfigPath);
+
+        // Verify writeFileSync was called with the correct arguments
+        expect(fs.writeFileSync).toHaveBeenCalledWith(
+            expect.stringContaining("besu-config-"),
+            "<network>test-network</network>"
+        );
+    });
+
+    it("should throw an error for unsupported file formats", async () => {
+        const configurator = new BesuConfigurator();
+        const testConfigPath = "test/besu-config.txt";
+
+        // Mock file system operations
+        vi.mocked(fs.existsSync).mockReturnValue(true);
+        vi.mocked(fs.readFileSync).mockReturnValue("Unsupported content");
+        vi.mocked(path.extname).mockReturnValue(".txt");
+
+        await expect(configurator.saveConfigWithVersioning(testConfigPath)).rejects.toThrow(
+            "Unsupported configuration file format: .txt"
+        );
+
+        // Verify writeFileSync was not called
+        expect(fs.writeFileSync).not.toHaveBeenCalled();
+    });
+
+    it("should handle missing configuration files gracefully", async () => {
+        const configurator = new BesuConfigurator();
+        const testConfigPath = "test/missing-config.json";
+
+        // Mock file system operations
+        vi.mocked(fs.existsSync).mockReturnValue(false);
+
+        await configurator.saveConfigWithVersioning(testConfigPath);
+
+        // Verify writeFileSync was not called
+        expect(fs.writeFileSync).not.toHaveBeenCalled();
+    });
 });

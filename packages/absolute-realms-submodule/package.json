@@ -1,0 +1,11 @@
+{
+    "name": "absolute-realms-submodule",
+    "version": "0.1.0",
+    "private": true,
+    "scripts": {
+        "start": "cd hierarchical-chart && pnpm start",
+        "build": "cd hierarchical-chart && pnpm build",
+        "test": "cd hierarchical-chart && pnpm test",
+        "lint": "cd hierarchical-chart && pnpm lint"
+    }
+}

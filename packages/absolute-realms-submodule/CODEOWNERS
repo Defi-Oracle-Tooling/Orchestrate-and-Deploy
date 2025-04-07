@@ -1,0 +1,14 @@
+# GitHub Enterprise management team owns the entire absolute-realms-submodule
+/packages/absolute-realms-submodule/ @enterprise-admin-team
+
+# Documentation ownership
+/packages/absolute-realms-submodule/docs/ @enterprise-admin-team @documentation-team
+
+# Hierarchical chart application ownership
+/packages/absolute-realms-submodule/hierarchical-chart/ @enterprise-admin-team @front-end-team
+
+# Infrastructure as Code ownership
+/packages/absolute-realms-submodule/infrastructure/ @enterprise-admin-team @infrastructure-team
+
+# GitHub workflows ownership
+/packages/absolute-realms-submodule/.github/ @enterprise-admin-team @devops-team

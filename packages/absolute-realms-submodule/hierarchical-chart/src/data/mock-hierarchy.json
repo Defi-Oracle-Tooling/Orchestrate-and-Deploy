@@ -1,0 +1,265 @@
+{
+    "ID": "0",
+    "Parent": "NA",
+    "Type": "SE",
+    "Name": "Absolute Realms",
+    "Children": [
+        {
+            "ID": "1",
+            "Parent": "0",
+            "Type": "SB",
+            "Name": "Executive Branch",
+            "Children": [
+                {
+                    "ID": "4",
+                    "Parent": "1",
+                    "Type": "SD",
+                    "Name": "Ministry of ",
+                    "Children": []
+                },
+                {
+                    "ID": "5",
+                    "Parent": "1",
+                    "Type": "SD",
+                    "Name": "Ministry of ",
+                    "Children": []
+                },
+                {
+                    "ID": "6",
+                    "Parent": "1",
+                    "Type": "SD",
+                    "Name": "Ministry of Finance",
+                    "Children": [
+                        {
+                            "ID": "9",
+                            "Parent": "6",
+                            "Type": "SD",
+                            "Name": "Department of Realms Treasury",
+                            "Children": [
+                                {
+                                    "ID": "11",
+                                    "Parent": "9",
+                                    "Type": "IGO",
+                                    "Name": "ELEMENTAL IMPERIUM",
+                                    "Children": [
+                                        {
+                                            "ID": "13",
+                                            "Parent": "11",
+                                            "Type": "EIC",
+                                            "Name": "Class 1 (Cooperatives)",
+                                            "Children": [
+                                                {
+                                                    "ID": "13-1",
+                                                    "Parent": "13",
+                                                    "Type": "CG",
+                                                    "Name": "Cooperative A",
+                                                    "Children": [
+                                                        {
+                                                            "ID": "13-1-1",
+                                                            "Parent": "13-1",
+                                                            "Type": "ENTITY",
+                                                            "Name": "Entity 1",
+                                                            "Children": []
+                                                        },
+                                                        {
+                                                            "ID": "13-1-2",
+                                                            "Parent": "13-1",
+                                                            "Type": "ENTITY",
+                                                            "Name": "Entity 2",
+                                                            "Children": []
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "ID": "13-2",
+                                                    "Parent": "13",
+                                                    "Type": "CG",
+                                                    "Name": "Cooperative B",
+                                                    "Children": [
+                                                        {
+                                                            "ID": "13-2-1",
+                                                            "Parent": "13-2",
+                                                            "Type": "ENTITY",
+                                                            "Name": "Entity 1",
+                                                            "Children": []
+                                                        },
+                                                        {
+                                                            "ID": "13-2-2",
+                                                            "Parent": "13-2",
+                                                            "Type": "ENTITY",
+                                                            "Name": "Entity 2",
+                                                            "Children": []
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            "ID": "14",
+                                            "Parent": "11",
+                                            "Type": "EIC",
+                                            "Name": "Class 2 (Cooperatives)",
+                                            "Children": [
+                                                {
+                                                    "ID": "14-1",
+                                                    "Parent": "14",
+                                                    "Type": "CG",
+                                                    "Name": "Cooperative A",
+                                                    "Children": [
+                                                        {
+                                                            "ID": "14-1-1",
+                                                            "Parent": "14-1",
+                                                            "Type": "ENTITY",
+                                                            "Name": "Entity 1",
+                                                            "Children": []
+                                                        },
+                                                        {
+                                                            "ID": "14-1-2",
+                                                            "Parent": "14-1",
+                                                            "Type": "ENTITY",
+                                                            "Name": "Entity 2",
+                                                            "Children": []
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "ID": "14-2",
+                                                    "Parent": "14",
+                                                    "Type": "CG",
+                                                    "Name": "Cooperative B",
+                                                    "Children": [
+                                                        {
+                                                            "ID": "14-2-1",
+                                                            "Parent": "14-2",
+                                                            "Type": "ENTITY",
+                                                            "Name": "Entity 1",
+                                                            "Children": []
+                                                        },
+                                                        {
+                                                            "ID": "14-2-2",
+                                                            "Parent": "14-2",
+                                                            "Type": "ENTITY",
+                                                            "Name": "Entity 2",
+                                                            "Children": []
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            "ID": "15",
+                                            "Parent": "11",
+                                            "Type": "EIC",
+                                            "Name": "Class 3 (Cooperatives)",
+                                            "Children": []
+                                        },
+                                        {
+                                            "ID": "16",
+                                            "Parent": "11",
+                                            "Type": "EIC",
+                                            "Name": "Class 4 (Cooperatives)",
+                                            "Children": []
+                                        },
+                                        {
+                                            "ID": "17",
+                                            "Parent": "11",
+                                            "Type": "EIC",
+                                            "Name": "Class 5 (Cooperatives)",
+                                            "Children": []
+                                        },
+                                        {
+                                            "ID": "18",
+                                            "Parent": "11",
+                                            "Type": "EIC",
+                                            "Name": "Class 6 (Cooperatives)",
+                                            "Children": []
+                                        },
+                                        {
+                                            "ID": "19",
+                                            "Parent": "11",
+                                            "Type": "EIC",
+                                            "Name": "Class 7 (Standalone)",
+                                            "Children": []
+                                        },
+                                        {
+                                            "ID": "20",
+                                            "Parent": "11",
+                                            "Type": "EIC",
+                                            "Name": "Class 8 (Standalone)",
+                                            "Children": [
+                                                {
+                                                    "ID": "20-1",
+                                                    "Parent": "20",
+                                                    "Type": "NGO",
+                                                    "Name": "PAX IMPERIUM",
+                                                    "Children": []
+                                                },
+                                                {
+                                                    "ID": "20-2",
+                                                    "Parent": "20",
+                                                    "Type": "NGO",
+                                                    "Name": "SCX IMPERIUM",
+                                                    "Children": []
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            "ID": "21",
+                                            "Parent": "11",
+                                            "Type": "EIC",
+                                            "Name": "Class 9 (Standalone)",
+                                            "Children": []
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "ID": "10",
+                            "Parent": "6",
+                            "Type": "SD",
+                            "Name": "Department of External Treasury",
+                            "Children": [
+                                {
+                                    "ID": "12",
+                                    "Parent": "10",
+                                    "Type": "IGO",
+                                    "Name": "ILLYRIAN STATES ALLIANCE",
+                                    "Children": []
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "ID": "7",
+                    "Parent": "1",
+                    "Type": "SD",
+                    "Name": "Ministry of ",
+                    "Children": []
+                },
+                {
+                    "ID": "8",
+                    "Parent": "1",
+                    "Type": "SD",
+                    "Name": "Ministry of ",
+                    "Children": []
+                }
+            ]
+        },
+        {
+            "ID": "2",
+            "Parent": "0",
+            "Type": "SB",
+            "Name": "Parliamentary Branch",
+            "Children": []
+        },
+        {
+            "ID": "3",
+            "Parent": "0",
+            "Type": "SB",
+            "Name": "Judicial Branch",
+            "Children": []
+        }
+    ]
+}

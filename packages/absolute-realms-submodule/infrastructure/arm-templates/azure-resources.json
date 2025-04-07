@@ -1,0 +1,260 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "environment": {
+            "type": "string",
+            "defaultValue": "development",
+            "allowedValues": [
+                "development",
+                "testing",
+                "staging",
+                "production"
+            ],
+            "metadata": {
+                "description": "Deployment environment"
+            }
+        },
+        "keyVaultName": {
+            "type": "string",
+            "defaultValue": "[concat('ar-kv-', parameters('environment'), '-', uniqueString(resourceGroup().id))]",
+            "metadata": {
+                "description": "Name of the Key Vault to store secrets"
+            }
+        },
+        "staticWebAppName": {
+            "type": "string",
+            "defaultValue": "[concat('ar-swa-', parameters('environment'), '-', uniqueString(resourceGroup().id))]",
+            "metadata": {
+                "description": "Name of the Static Web App for hosting the hierarchy visualization"
+            }
+        },
+        "functionAppName": {
+            "type": "string",
+            "defaultValue": "[concat('ar-func-', parameters('environment'), '-', uniqueString(resourceGroup().id))]",
+            "metadata": {
+                "description": "Name of the Function App for GitHub API integration"
+            }
+        },
+        "appInsightsName": {
+            "type": "string",
+            "defaultValue": "[concat('ar-ai-', parameters('environment'), '-', uniqueString(resourceGroup().id))]",
+            "metadata": {
+                "description": "Name of Application Insights instance for monitoring"
+            }
+        },
+        "storageAccountName": {
+            "type": "string",
+            "defaultValue": "[concat('arsa', parameters('environment'), uniqueString(resourceGroup().id))]",
+            "metadata": {
+                "description": "Name of storage account for the Function App"
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Location for all resources"
+            }
+        }
+    },
+    "variables": {
+        "functionAppServicePlanName": "[concat('ar-asp-', parameters('environment'), '-', uniqueString(resourceGroup().id))]",
+        "userAssignedIdentityName": "[concat('ar-id-', parameters('environment'), '-', uniqueString(resourceGroup().id))]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+            "apiVersion": "2018-11-30",
+            "name": "[variables('userAssignedIdentityName')]",
+            "location": "[parameters('location')]"
+        },
+        {
+            "type": "Microsoft.KeyVault/vaults",
+            "apiVersion": "2022-07-01",
+            "name": "[parameters('keyVaultName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('userAssignedIdentityName'))]"
+            ],
+            "properties": {
+                "enabledForDeployment": false,
+                "enabledForTemplateDeployment": true,
+                "enabledForDiskEncryption": false,
+                "tenantId": "[subscription().tenantId]",
+                "accessPolicies": [
+                    {
+                        "tenantId": "[subscription().tenantId]",
+                        "objectId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('userAssignedIdentityName')), '2018-11-30').principalId]",
+                        "permissions": {
+                            "secrets": [
+                                "get",
+                                "list",
+                                "set"
+                            ]
+                        }
+                    }
+                ],
+                "sku": {
+                    "name": "standard",
+                    "family": "A"
+                },
+                "networkAcls": {
+                    "defaultAction": "Allow",
+                    "bypass": "AzureServices"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2021-09-01",
+            "name": "[parameters('storageAccountName')]",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "Standard_LRS"
+            },
+            "kind": "StorageV2",
+            "properties": {
+                "supportsHttpsTrafficOnly": true,
+                "minimumTlsVersion": "TLS1_2",
+                "allowBlobPublicAccess": false,
+                "networkAcls": {
+                    "bypass": "AzureServices",
+                    "virtualNetworkRules": [],
+                    "ipRules": [],
+                    "defaultAction": "Allow"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Insights/components",
+            "apiVersion": "2020-02-02",
+            "name": "[parameters('appInsightsName')]",
+            "location": "[parameters('location')]",
+            "kind": "web",
+            "properties": {
+                "Application_Type": "web",
+                "WorkspaceResourceId": null,
+                "publicNetworkAccessForIngestion": "Enabled",
+                "publicNetworkAccessForQuery": "Enabled"
+            }
+        },
+        {
+            "type": "Microsoft.Web/serverfarms",
+            "apiVersion": "2022-03-01",
+            "name": "[variables('functionAppServicePlanName')]",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "Y1",
+                "tier": "Dynamic"
+            },
+            "properties": {
+                "reserved": true
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites",
+            "apiVersion": "2022-03-01",
+            "name": "[parameters('functionAppName')]",
+            "location": "[parameters('location')]",
+            "kind": "functionapp,linux",
+            "identity": {
+                "type": "UserAssigned",
+                "userAssignedIdentities": {
+                    "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('userAssignedIdentityName'))]": {}
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/serverfarms', variables('functionAppServicePlanName'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]",
+                "[resourceId('Microsoft.Insights/components', parameters('appInsightsName'))]",
+                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('userAssignedIdentityName'))]"
+            ],
+            "properties": {
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('functionAppServicePlanName'))]",
+                "siteConfig": {
+                    "appSettings": [
+                        {
+                            "name": "FUNCTIONS_EXTENSION_VERSION",
+                            "value": "~4"
+                        },
+                        {
+                            "name": "FUNCTIONS_WORKER_RUNTIME",
+                            "value": "node"
+                        },
+                        {
+                            "name": "WEBSITE_NODE_DEFAULT_VERSION",
+                            "value": "~16"
+                        },
+                        {
+                            "name": "AzureWebJobsStorage",
+                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', parameters('storageAccountName'), ';EndpointSuffix=', environment().suffixes.storage, ';AccountKey=', listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2021-09-01').keys[0].value)]"
+                        },
+                        {
+                            "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+                            "value": "[reference(resourceId('Microsoft.Insights/components', parameters('appInsightsName')), '2020-02-02').InstrumentationKey]"
+                        },
+                        {
+                            "name": "APPLICATIONINSIGHTS_CONNECTION_STRING",
+                            "value": "[reference(resourceId('Microsoft.Insights/components', parameters('appInsightsName')), '2020-02-02').ConnectionString]"
+                        },
+                        {
+                            "name": "KEY_VAULT_NAME",
+                            "value": "[parameters('keyVaultName')]"
+                        },
+                        {
+                            "name": "WEBSITE_RUN_FROM_PACKAGE",
+                            "value": "1"
+                        },
+                        {
+                            "name": "AZURE_CLIENT_ID",
+                            "value": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('userAssignedIdentityName')), '2018-11-30').clientId]"
+                        }
+                    ],
+                    "cors": {
+                        "allowedOrigins": [
+                            "[concat('https://', parameters('staticWebAppName'), '.azurestaticapps.net')]"
+                        ],
+                        "supportCredentials": false
+                    },
+                    "ftpsState": "Disabled",
+                    "minTlsVersion": "1.2",
+                    "linuxFxVersion": "NODE|16"
+                },
+                "httpsOnly": true
+            }
+        },
+        {
+            "type": "Microsoft.Web/staticSites",
+            "apiVersion": "2022-03-01",
+            "name": "[parameters('staticWebAppName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "repositoryUrl": "",
+                "branch": "main",
+                "buildProperties": {
+                    "appLocation": "packages/absolute-realms-submodule/hierarchical-chart",
+                    "outputLocation": "build"
+                }
+            },
+            "sku": {
+                "name": "Standard",
+                "tier": "Standard"
+            }
+        }
+    ],
+    "outputs": {
+        "functionAppUrl": {
+            "type": "string",
+            "value": "[concat('https://', parameters('functionAppName'), '.azurewebsites.net')]"
+        },
+        "staticWebAppUrl": {
+            "type": "string",
+            "value": "[concat('https://', parameters('staticWebAppName'), '.azurestaticapps.net')]"
+        },
+        "keyVaultUrl": {
+            "type": "string",
+            "value": "[concat('https://', parameters('keyVaultName'), '.vault.azure.net/')]"
+        }
+    }
+}

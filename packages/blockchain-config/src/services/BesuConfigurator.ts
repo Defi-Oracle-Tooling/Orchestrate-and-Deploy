@@ -182,28 +182,46 @@ export class BesuConfigurator {
 
     /**
      * Save configuration with versioning
+     * Supports both JSON and XML configurations.
      * @param configPath Path to the configuration file
      */
     public async saveConfigWithVersioning(configPath: string): Promise<void> {
         try {
-            // Load and validate the configuration file
+            // Check if the configuration file exists
+            if (!fs.existsSync(configPath)) {
+                throw new Error(`Configuration file not found: ${configPath}`);
+            }
+
+            // Read the configuration file
             const configContents = fs.readFileSync(configPath, "utf8");
-            JSON.parse(configContents); // Basic JSON validation
+            const fileExt = path.extname(configPath).toLowerCase();
+
+            // Validate the configuration based on its format
+            if (fileExt === ".json") {
+                JSON.parse(configContents); // Basic JSON validation
+            } else if (fileExt === ".xml") {
+                if (!configContents.includes("<network>")) {
+                    throw new Error("Invalid XML configuration: Missing <network> element");
+                }
+            } else {
+                throw new Error(`Unsupported configuration file format: ${fileExt}`);
+            }
 
             // Save a versioned copy of the configuration
             const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-            const versionFilePath = path.join(this.versionHistoryDir, `besu-config-${timestamp}.json`);
+            const versionFilePath = path.join(this.versionHistoryDir, `besu-config-${timestamp}${fileExt}`);
             fs.writeFileSync(versionFilePath, configContents);
+
             console.log(chalk.green(`✅ Configuration saved with versioning at: ${versionFilePath}`));
 
-            TelemetryService.trackEvent('ConfigVersioningSaved', {
+            TelemetryService.trackEvent("ConfigVersioningSaved", {
                 configPath,
                 versionFilePath
             });
         } catch (error) {
             console.error(chalk.red(`❌ Failed to save configuration with versioning: ${error instanceof Error ? error.message : String(error)}`));
             TelemetryService.trackException(error instanceof Error ? error : new Error(String(error)), {
-                operation: 'SaveConfigWithVersioning',
+                operation: "SaveConfigWithVersioning",
                 configPath
             });
         }

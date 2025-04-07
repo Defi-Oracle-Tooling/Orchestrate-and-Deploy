@@ -1,0 +1,76 @@
+name: Deploy - Absolute Realms Hierarchy
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'packages/absolute-realms-submodule/**'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'development'
+        type: choice
+        options:
+          - development
+          - staging
+          - production
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || 'development' }}
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '16'
+        cache: 'pnpm'
+        
+    - name: Install pnpm
+      uses: pnpm/action-setup@v2
+      with:
+        version: 7
+        run_install: false
+        
+    - name: Install dependencies
+      run: pnpm install
+      
+    - name: Build
+      run: pnpm --filter absolute-realms-submodule build
+      env:
+        REACT_APP_GITHUB_API_URL: ${{ secrets.GITHUB_API_URL }}
+    
+    - name: Setup Azure CLI
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    
+    - name: Deploy to Azure Static Web App
+      id: deploy-to-azure-static-web-app
+      uses: Azure/static-web-apps-deploy@v1
+      with:
+        azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APP_TOKEN }}
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        action: "upload"
+        app_location: "packages/absolute-realms-submodule/hierarchical-chart/build"
+        api_location: ""
+        output_location: ""
+        
+    - name: Deploy Azure Function App
+      uses: Azure/functions-action@v1
+      with:
+        app-name: ${{ secrets.AZURE_FUNCTION_APP_NAME }}
+        package: packages/absolute-realms-submodule/functions
+        
+    - name: Update Key Vault Secrets
+      uses: azure/CLI@v1
+      with:
+        inlineScript: |
+          az keyvault secret set --vault-name ${{ secrets.AZURE_KEY_VAULT_NAME }} --name "GitHubAppId" --value "${{ secrets.GITHUB_APP_ID }}"
+          az keyvault secret set --vault-name ${{ secrets.AZURE_KEY_VAULT_NAME }} --name "GitHubPrivateKey" --value "${{ secrets.GITHUB_PRIVATE_KEY }}"
+          az keyvault secret set --vault-name ${{ secrets.AZURE_KEY_VAULT_NAME }} --name "GitHubInstallationId" --value "${{ secrets.GITHUB_INSTALLATION_ID }}"
