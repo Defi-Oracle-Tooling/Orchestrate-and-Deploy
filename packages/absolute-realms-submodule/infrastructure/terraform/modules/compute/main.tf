@@ -82,32 +82,25 @@ resource "azurerm_application_insights" "main" {
   tags = local.common_tags
 }
 
-# App Service Plan
-resource "azurerm_app_service_plan" "main" {
+# Service Plan
+resource "azurerm_service_plan" "main" {
   name                = local.app_service_plan_name
   resource_group_name = var.resource_group_name
   location            = var.location
-  kind                = "Linux"
-  reserved            = true
-
-  sku {
-    tier = "Dynamic"
-    size = "Y1"
-  }
+  os_type             = "Linux"
+  sku_name            = "Y1"
 
   tags = local.common_tags
 }
 
 # Function App with enhanced security
-resource "azurerm_function_app" "main" {
+resource "azurerm_linux_function_app" "main" {
   name                       = local.function_app_name
   resource_group_name        = var.resource_group_name
   location                   = var.location
-  app_service_plan_id        = azurerm_app_service_plan.main.id
+  service_plan_id            = azurerm_service_plan.main.id
   storage_account_name       = var.storage_account_name
   storage_account_access_key = var.storage_account_access_key
-  os_type                    = "linux"
-  version                    = "~4"
   https_only                 = true
 
   identity {
@@ -117,52 +110,19 @@ resource "azurerm_function_app" "main" {
 
   app_settings = {
     FUNCTIONS_WORKER_RUNTIME              = "node"
-    WEBSITE_NODE_DEFAULT_VERSION          = "~18" # Updated to Node.js 18 LTS
+    WEBSITE_NODE_DEFAULT_VERSION          = "~18"
     APPINSIGHTS_INSTRUMENTATIONKEY        = azurerm_application_insights.main.instrumentation_key
     APPLICATIONINSIGHTS_CONNECTION_STRING = azurerm_application_insights.main.connection_string
     KEY_VAULT_NAME                        = var.key_vault_name
     WEBSITE_RUN_FROM_PACKAGE              = "1"
     AZURE_CLIENT_ID                       = var.user_identity_client_id
-    SCM_DO_BUILD_DURING_DEPLOYMENT        = "true"
-    ENABLE_ORYX_BUILD                     = "true"
-    # Add health check settings
-    WEBSITE_HEALTHCHECK_MAXPINGFAILURES = "2"
-    # Add performance and scaling settings
-    FUNCTIONS_EXTENSION_VERSION              = "~4"
-    WEBSITE_CONTENTAZUREFILECONNECTIONSTRING = ""     # Use managed storage 
-    WEBSITE_CONTENTOVERVNET                  = "1"    # Enable content over VNet
-    AzureWebJobsDisableHomepage              = "true" # Security improvement
-    # Auto-scale settings
-    SCALE_CONTROLLER_LOGGING_ENABLED = "AppInsights:Verbose"
   }
 
   site_config {
-    linux_fx_version                  = "NODE|18" # Updated to Node.js 18 LTS
-    min_tls_version                   = "1.2"
-    ftps_state                        = "Disabled"
-    http2_enabled                     = true
-    vnet_route_all_traffic            = var.subnet_id != "" ? true : false
-    health_check_path                 = "/api/health" # Add health check endpoint
-    health_check_eviction_time_in_min = 2
-
+    linux_fx_version = "NODE|18"
+    ftps_state       = "Disabled"
     cors {
       allowed_origins = ["https://${local.static_site_name}.azurestaticapps.net"]
-    }
-
-    # Add IP security restrictions
-    ip_restriction {
-      action      = "Allow"
-      service_tag = "AzureCloud"
-      priority    = 100
-      name        = "Allow Azure Services"
-    }
-  }
-
-  # Only add private endpoint if subnet_id is provided
-  dynamic "private_site_access_v2" {
-    for_each = var.subnet_id != "" ? [var.subnet_id] : []
-    content {
-      virtual_network_subnet_id = private_site_access_v2.value
     }
   }
 
@@ -172,10 +132,10 @@ resource "azurerm_function_app" "main" {
 # Function App slots for zero-downtime deployments
 resource "azurerm_function_app_slot" "staging" {
   name                       = "staging"
-  function_app_name          = azurerm_function_app.main.name
+  function_app_name          = azurerm_linux_function_app.main.name
   resource_group_name        = var.resource_group_name
   location                   = var.location
-  app_service_plan_id        = azurerm_app_service_plan.main.id
+  app_service_plan_id        = azurerm_service_plan.main.id
   storage_account_name       = var.storage_account_name
   storage_account_access_key = var.storage_account_access_key
   os_type                    = "linux"
@@ -210,12 +170,11 @@ resource "azurerm_function_app_slot" "staging" {
   }
 
   site_config {
-    linux_fx_version                  = "NODE|18" # Updated to Node.js 18 LTS
-    min_tls_version                   = "1.2"
-    ftps_state                        = "Disabled"
-    http2_enabled                     = true
-    health_check_path                 = "/api/health" # Add health check endpoint
-    health_check_eviction_time_in_min = 2
+    linux_fx_version  = "NODE|18" # Updated to Node.js 18 LTS
+    min_tls_version   = "1.2"
+    ftps_state        = "Disabled"
+    http2_enabled     = true
+    health_check_path = "/api/health" # Add health check endpoint
 
     cors {
       allowed_origins = ["https://${local.static_site_name}.azurestaticapps.net"]
@@ -248,7 +207,7 @@ resource "azurerm_static_site" "main" {
 resource "azurerm_monitor_metric_alert" "function_app_failures" {
   name                = "${local.function_app_name}-failures-alert"
   resource_group_name = var.resource_group_name
-  scopes              = [azurerm_function_app.main.id]
+  scopes              = [azurerm_linux_function_app.main.id]
   description         = "Alert when function app failures exceed threshold"
   severity            = 2
 
@@ -277,7 +236,7 @@ resource "azurerm_monitor_metric_alert" "function_app_failures" {
 resource "azurerm_monitor_metric_alert" "function_app_latency" {
   name                = "${local.function_app_name}-latency-alert"
   resource_group_name = var.resource_group_name
-  scopes              = [azurerm_function_app.main.id]
+  scopes              = [azurerm_linux_function_app.main.id]
   description         = "Alert when function app average latency exceeds threshold"
   severity            = 2
 
@@ -314,63 +273,30 @@ resource "azurerm_monitor_action_group" "ops" {
 # Function App Diagnostic Settings
 resource "azurerm_monitor_diagnostic_setting" "function_app" {
   name                       = "${local.function_app_name}-diag"
-  target_resource_id         = azurerm_function_app.main.id
+  target_resource_id         = azurerm_linux_function_app.main.id
   log_analytics_workspace_id = var.log_analytics_workspace_id
-
-  enabled_log {
-    category = "FunctionAppLogs"
-    retention_policy {
-      enabled = true
-      days    = 30
-    }
-  }
-
-  enabled_log {
-    category = "FunctionExecutionLogs"
-    retention_policy {
-      enabled = true
-      days    = 30
-    }
-  }
-
-  enabled_log {
-    category = "AllMetrics"
-    retention_policy {
-      enabled = true
-      days    = 30
-    }
-  }
 
   metric {
     category = "AllMetrics"
-    retention_policy {
-      enabled = true
-      days    = 30
-    }
   }
 }
 
 # Add VNet Integration for Function App if subnet_id is provided
 resource "azurerm_app_service_virtual_network_swift_connection" "function_vnet_integration" {
   count          = var.subnet_id != "" ? 1 : 0
-  app_service_id = azurerm_function_app.main.id
+  app_service_id = azurerm_linux_function_app.main.id
   subnet_id      = var.subnet_id
 }
 
 # Outputs
 output "function_app_id" {
   description = "ID of the Function App"
-  value       = azurerm_function_app.main.id
+  value       = azurerm_linux_function_app.main.id
 }
 
 output "function_app_name" {
   description = "Name of the Function App"
-  value       = azurerm_function_app.main.name
-}
-
-output "function_app_url" {
-  description = "URL of the Function App"
-  value       = "https://${azurerm_function_app.main.default_hostname}"
+  value       = azurerm_linux_function_app.main.name
 }
 
 output "static_site_id" {

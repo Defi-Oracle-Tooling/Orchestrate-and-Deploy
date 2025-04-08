@@ -1,6 +1,6 @@
 output "function_app_url" {
-  description = "The URL of the deployed Azure Function App"
-  value       = "https://${azurerm_function_app.main.default_hostname}"
+  description = "URL of the Function App"
+  value       = "https://${azurerm_linux_function_app.main.default_hostname}"
 }
 
 output "static_web_app_url" {

@@ -70,5 +70,11 @@ variable "github_base_url" {
   default     = "https://api.github.com"
 }
 
+variable "authorized_ip_ranges" {
+  description = "List of authorized IP ranges for accessing resources."
+  type        = list(string)
+  default     = []
+}
+
 # These variables can be set from a tfvars file or environment variables
 # terraform apply -var-file="secrets.tfvars"

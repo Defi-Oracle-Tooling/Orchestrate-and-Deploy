@@ -61,6 +61,7 @@ module "security" {
 module "storage" {
   source = "../../modules/storage"
 
+  name                 = "absoluterealms${local.environment}sa"
   resource_group_name = data.azurerm_resource_group.main.name
   location            = local.location
   environment         = local.environment
@@ -75,6 +76,7 @@ module "storage" {
 module "compute" {
   source = "../../modules/compute"
 
+  # Required parameters
   resource_group_name = data.azurerm_resource_group.main.name
   location            = local.location
   environment         = local.environment
@@ -90,11 +92,6 @@ module "compute" {
 }
 
 # Outputs
-output "function_app_url" {
-  description = "URL of the Function App"
-  value       = module.compute.function_app_url
-}
-
 output "static_site_url" {
   description = "URL of the Static Web App"
   value       = module.compute.static_site_url

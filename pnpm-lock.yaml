@@ -30,6 +30,12 @@ importers:
       '@eslint/object-schema':
         specifier: ^2.1.6
         version: 2.1.6
+      '@types/axios':
+        specifier: ^0.14.4
+        version: 0.14.4
+      axios:
+        specifier: ^1.8.4
+        version: 1.8.4
       glob:
         specifier: ^11.0.1
         version: 11.0.1
@@ -131,7 +137,7 @@ importers:
   packages/front-end:
     dependencies:
       axios:
-        specifier: ^1.2.2
+        specifier: ^1.8.4
         version: 1.8.4
       react:
         specifier: ^18.2.0
@@ -1239,6 +1245,10 @@ packages:
 
   '@types/aria-query@5.0.4':
     resolution: {integrity: sha512-rfT93uj5s0PRL7EzccGMs3brplhcrghnDoV26NqKhCAS1hVo+WdNsPvE/yb6ilfr5hi2MEk6d5EWJTKdxg8jVw==}
+
+  '@types/axios@0.14.4':
+    resolution: {integrity: sha512-9JgOaunvQdsQ/qW2OPmE5+hCeUB52lQSolecrFrthct55QekhmXEwT203s20RL+UHtCQc15y3VXpby9E7Kkh/g==}
+    deprecated: This is a stub types definition. axios provides its own type definitions, so you do not need this installed.
 
   '@types/babel__core@7.20.5':
     resolution: {integrity: sha512-qoQprZvz5wQFJwMDqeseRXWv3rqMvhgpbXFfVyWhbx9X47POIA6i/+dXefEmZKoAgOaTdaIgNSMqMIU61yRyzA==}
@@ -5050,6 +5060,12 @@ snapshots:
   '@tsconfig/node16@1.0.4': {}
 
   '@types/aria-query@5.0.4': {}
+
+  '@types/axios@0.14.4':
+    dependencies:
+      axios: 1.8.4
+    transitivePeerDependencies:
+      - debug
 
   '@types/babel__core@7.20.5':
     dependencies:

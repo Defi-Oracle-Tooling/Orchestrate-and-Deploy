@@ -188,32 +188,25 @@ resource "azurerm_application_insights" "main" {
   tags = local.common_tags
 }
 
-# App Service Plan
-resource "azurerm_app_service_plan" "main" {
+# Service Plan
+resource "azurerm_service_plan" "main" {
   name                = local.app_service_plan_name
   resource_group_name = data.azurerm_resource_group.main.name
   location            = var.location
-  kind                = "Linux"
-  reserved            = true
-
-  sku {
-    tier = "Dynamic"
-    size = "Y1"
-  }
+  os_type             = "Linux"
+  sku_name            = "Y1"
 
   tags = local.common_tags
 }
 
 # Function App
-resource "azurerm_function_app" "main" {
+resource "azurerm_linux_function_app" "main" {
   name                       = local.function_app_name
   resource_group_name        = data.azurerm_resource_group.main.name
   location                   = var.location
-  app_service_plan_id        = azurerm_app_service_plan.main.id
+  service_plan_id            = azurerm_service_plan.main.id
   storage_account_name       = azurerm_storage_account.main.name
   storage_account_access_key = azurerm_storage_account.main.primary_access_key
-  os_type                    = "linux"
-  version                    = "~4"
   https_only                 = true
 
   identity {
@@ -223,7 +216,7 @@ resource "azurerm_function_app" "main" {
 
   app_settings = {
     FUNCTIONS_WORKER_RUNTIME       = "node"
-    WEBSITE_NODE_DEFAULT_VERSION   = "~16"
+    WEBSITE_NODE_DEFAULT_VERSION   = "~18"
     APPINSIGHTS_INSTRUMENTATIONKEY = azurerm_application_insights.main.instrumentation_key
     KEY_VAULT_NAME                 = azurerm_key_vault.main.name
     WEBSITE_RUN_FROM_PACKAGE       = "1"
@@ -231,8 +224,7 @@ resource "azurerm_function_app" "main" {
   }
 
   site_config {
-    linux_fx_version = "NODE|16"
-    min_tls_version  = "1.2"
+    linux_fx_version = "NODE|18"
     ftps_state       = "Disabled"
     cors {
       allowed_origins = ["https://${local.static_site_name}.azurestaticapps.net"]

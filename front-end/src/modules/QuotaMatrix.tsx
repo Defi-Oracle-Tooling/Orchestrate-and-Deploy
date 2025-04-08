@@ -261,7 +261,9 @@ const QuotaMatrix: React.FC = () => {
         const roles = new Set<string>();
         Object.values(quotaData).forEach(regionData => {
             Object.values(regionData).forEach(skuData => {
-                skuData.assigned_to.forEach(role => roles.add(role));
+                // Apply type assertion since we know the structure
+                const typedSkuData = skuData as QuotaData[string][string];
+                typedSkuData.assigned_to.forEach(role => roles.add(role));
             });
         });
         return Array.from(roles).sort();
@@ -276,8 +278,10 @@ const QuotaMatrix: React.FC = () => {
             let usedQuota = 0;
 
             Object.values(skus).forEach(details => {
-                totalQuota += details.total;
-                usedQuota += details.used;
+                // Type assertion for details object
+                const typedDetails = details as QuotaData[string][string];
+                totalQuota += typedDetails.total;
+                usedQuota += typedDetails.used;
             });
 
             const availableQuota = totalQuota - usedQuota;
@@ -596,6 +600,18 @@ const QuotaMatrix: React.FC = () => {
                 <p>Last Updated: {new Date().toLocaleString()}</p>
                 <p>Auto-refreshes every 5 minutes</p>
             </div>
+            [{
+	"resource": "/workspaces/Orchestrate-and-Deploy/front-end/src/modules/QuotaMatrix.tsx",
+	"owner": "typescript",
+	"code": "18046",
+	"severity": 8,
+	"message": "'details' is of type 'unknown'.",
+	"source": "ts",
+	"startLineNumber": 367,
+	"startColumn": 54,
+	"endLineNumber": 367,
+	"endColumn": 61
+}]
         </div>
     );
 };
